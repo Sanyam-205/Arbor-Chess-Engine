@@ -1,4 +1,6 @@
 using System;
+using System.Numerics;
+using System.Reflection.Metadata;
 public static class AttackTables
 {
     /// const ulong fileAMask = 72340172838076673; 
@@ -9,18 +11,19 @@ public static class AttackTables
     /// const ulong fileGHMask = 13889313184910721216;
     /*
         A    A B C D E F G H 
-        8    
-        7    
-        6    
+        8     
+        7     
+        6     
         5     
-        4    
-        3    
-        2     
-        1     
+        4     
+        3     
+        2      
+        1      
     
 
-        0000000011111111111111111111111111111111111111111111111111111111
-    
+        00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+        00000000 00000001 00000001 00000001 00000001 00000001 00000001 01111110
+        10000000 10000000 10000000 10000000 10000000 10111111 00000000 00000000
     
     
     
@@ -36,6 +39,44 @@ public static class AttackTables
     const ulong fileHMask  = 0x8080808080808080UL;
     const ulong fileABMask = 0x0303030303030303UL;
     const ulong fileGHMask = 0xC0C0C0C0C0C0C0C0UL;
+
+
+    //Relevant bits for bishop and rook
+    public static readonly int[] bishopRelevantBits = 
+    {
+        6, 5, 5, 5, 5, 5, 5, 6, 
+        5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5, 7, 7, 7, 7, 5, 5, 
+        5, 5, 7, 9, 9, 7, 5, 5, 
+        5, 5, 7, 9, 9, 7, 5, 5, 
+        5, 5, 7, 7, 7, 7, 5, 5, 
+        5, 5, 5, 5, 5, 5, 5, 5, 
+        6, 5, 5, 5, 5, 5, 5, 6
+
+    };
+
+    public static readonly int[] rookRelevantBits =
+    {
+        12, 11, 11, 11, 11, 11, 11, 12, 
+        11, 10, 10, 10, 10, 10, 10, 11, 
+        11, 10, 10, 10, 10, 10, 10, 11, 
+        11, 10, 10, 10, 10, 10, 10, 11, 
+        11, 10, 10, 10, 10, 10, 10, 11, 
+        11, 10, 10, 10, 10, 10, 10, 11, 
+        11, 10, 10, 10, 10, 10, 10, 11, 
+        12, 11, 11, 11, 11, 11, 11, 12
+    };
+    
+    public static readonly ulong[] rookMagicNumbers = 
+    {
+        4932145288825086017, 1407942091866145, 9223530503985170497, 4652236007864312065, 9288726442182161, 9223653659001235457, 2305845242865189524, 288812044386566466, 
+        2378041342031831296, 1197405240328704, 144703014484115712, 1245262893451053312, 47287822244184320, 2201173098624, 2401514589348864, 91763608383406592, 
+        36029072433758208, 14141320456524800000, 4512400619347969, 9295465915581792296, 10376312233293578308, 563018740924424, 1224981334326509584, 9799835282604949508, 
+        146508000566182048, 45071249369464898, 5188164369434812416, 360446319199782912, 11529496555421697040, 3188970903270588928, 563534102528260, 89138858557572, 
+        13835692477789011968, 577903313710743680, 72655730511972480, 76565767806582944, 2252351717244936, 14015347178059726976, 36031013222617121, 13651538518098176, 306809924191830144, 9223585617256964096, 7642609117674078344, 4702180773330161664, 2596325460124123648, 1549942510455890944, 36033195201925121, 328764972031033604, 
+        2882444500080427041, 2306054116522070020, 281547995635714, 144678172659565057, 432627163759413248, 4846436183632380228, 2306405967757574436, 306526251789975808, 5224175842628763685, 54052129061470272, 72066463149596672, 3494810903229497472, 108108383437064192, 2413931601441917952, 324260272690708992, 1297036968181629062
+    };
+        
     
     public static readonly ulong[] whitePawnAttacks = new ulong [64];
     public static readonly ulong[] blackPawnAttacks = new ulong[64];
@@ -200,7 +241,8 @@ public static class AttackTables
     }
 
 
-    private static void GenerateRookMask(int square)
+    // Generates Rook attack mask for every square, excluding the squares on edge of the board.
+    public static ulong GenerateRookMask(int square)
     {
         int rank = square / 8;
         int file = square % 8;
@@ -241,10 +283,13 @@ public static class AttackTables
             rookMask |= 1UL << s;
         }
     
-    
+        return rookMask;
+
     }
 
-    private static void GenerateBishopMask(int square)
+
+    // Generates Bishop attack mask for every square, excluding the squares on edge of the board.
+    public static void GenerateBishopMask(int square)
     {
         int rank = square / 8;
         int file = square % 8;
@@ -284,28 +329,250 @@ public static class AttackTables
 
         }
 
+        
+
     }
 
     /// If we have a rook on a1, GenerateRookMask will generate 12 moves. 6 on A file, a2 - a7 and 6 and rank 1, b1 - g1. Each of these squares can be occupied. 
     /// If we use a bitboard to represent when which piece is occupied, we will 4096 bitboards all stored in one array. We got 4096, because each of the 12 squares can be either 0 or 1 (empty or occupied.) So total number of combinations is 2^12. 
 
 
-    public static void GenerateRookOccupancies()
+    /// SetOccupancies function takes in 3 parameters. index, bitInMask and attackMask
+    /// Using these 3 parameters, it generates another ulong occupancy. Occupancy ulong generates every possible arrangment of pieces present in the attackMask. 
+    /// Function of attackMask is to give all possible squares that can be blocked by a piece in regards to a slider piece on one particular square.
+    /// Function of index is to map an index to each possible possible combination.
+    /// bitsInMask is used because when we are using a loop to generate attack table, each square would not have the same number of bits in the attackMask, For ex, a rook on a1 has 12 bits in mask whereas if it is on a2, there are only 11 bits in the attack mask. To prevent the loop from running unnecessarily, we use this. 
+    public static ulong SetOccupancies(int index, int bitsInMask, ulong attackMask)
     {
-        for(int index = 0; index < 4095; index++)
+        ulong occupancy = 0;
+
+
+        /// For a rook on a1, bitsInMask is 12, so this for loop will generate all possible combinations of occupancies for those 12 squares.
+        for (int i = 0; i<bitsInMask; i++)
         {
-            
+            int square = BitOperations.TrailingZeroCount(attackMask);
+            attackMask &= attackMask-1;
+            if ((index & (1 << i)) != 0)
+            {
+                occupancy |= 1UL << square;
+            }
         }
+
+
+        return occupancy;
     }
 
 
 
+    public static ulong GenerateBishopAttacks(int square, ulong occupancy) //Generate bishop attacks on the fly
+    {
+        int rank = square / 8;
+        int file = square % 8;
+
+        ulong bishopAttacks = 0;
+        {
+        // north east traversal
+        for (int r = rank + 1, f = file +1; r<=7 && f<=7; r++, f++)
+        {
+            int s = (r*8) + f;
+            bishopAttacks |= 1UL << s;
+            if ((occupancy & (1UL << s)) != 0) break;
+        }
+        
+        // north west traversal
+        for (int r = rank + 1, f = file - 1; r<=7 && f>=0; r++, f--)
+        {          
+            int s = (r*8) + f;
+            bishopAttacks |= 1UL << s;
+           if ((occupancy & (1UL << s)) != 0) break;
+
+        }
+
+        //sout east traversal
+        for (int r = rank - 1, f = file + 1; r>=0 && f<=7; r--, f++)
+        {
+            int s = (r*8) + f;
+            bishopAttacks |= 1UL << s;
+            if ((occupancy & (1UL << s)) != 0) break;
+
+        }
+
+        //south west traversal
+        for (int r = rank - 1, f = file - 1; r>=0 && f>=0; r--, f--)
+        {
+            int s = (r*8) + f;
+            bishopAttacks |= 1UL << s;
+            if ((occupancy & (1UL << s)) != 0) break;
+
+        }
+        
+        }
+
+
+
+        return bishopAttacks;
+
+    }
+
+    
+    //Generates rook attacks on the fly.
+    public static ulong GenerateRookAttacks(int square, ulong occupancy)
+    {
+        int rank = square / 8;
+        int file = square % 8;
+                
+        ulong rookAttacks = 0;
+        
+        //traversing rank in north direction excluding the 7th rank (topmost rank is 7 since it starts from 0)
+        for(int r = rank+1; r<=7; r++)
+        {
+            int s = (r*8) + file;
+            rookAttacks |= 1UL << s;
+            if((occupancy & ( 1UL << s)) != 0) break;
+
+        }
+        
+        //traversing south 
+        for(int r = rank - 1; r>=0; r--)
+        {
+            int s = (r*8) + file;
+            rookAttacks |= 1UL << s;
+            if((occupancy & ( 1UL << s)) != 0) break;
+
+        }
+
+        //traversing east
+        for(int f = file+1; f<=7; f++)
+        {
+            int s = (rank * 8) + f;
+            rookAttacks |= 1UL << s;
+            if((occupancy & ( 1UL << s)) != 0) break;
+        }
+
+        //traversing west
+        for(int f = file-1; f >= 0; f--)
+        {
+            int s = (rank*8) + f;
+            rookAttacks |= 1UL << s;
+            if((occupancy & ( 1UL << s)) != 0) break;
+        }
+    
+        return rookAttacks;
+
+    }
+
+
+    /// CalculateROokTable uses SetOccupancy and GenerateRookAttacks to generate the rook attack table.
+     
+    
+    public static ulong[] RookMagicNumbers = new ulong[64];
+    public static ulong[][] RookAttacks = new ulong [64][];
+
+
+    public static void CalculateRookTable(int square)
+    {
+        int combinations = 1 << rookRelevantBits[square];
+        ulong[] occupancies = new ulong[combinations];
+        ulong[] attacks = new ulong[combinations];
+        ulong mask = GenerateRookMask(square);
+        int shift = 64 - rookRelevantBits[square];
+        
+
+        for (int i = 0; i < combinations; i++)
+        {
+            // generate occupancy for i
+            // generate attack for this particular occupancy
+            // store them in corresponding arrays
+
+            occupancies[i] = SetOccupancies(i, rookRelevantBits[square], mask);            
+            attacks[i] = GenerateRookAttacks(square, occupancies[i]);  
+            
+        }
+
+        bool fail = true;
+        
+        ulong finalMagicNumber = 0;
+        ulong[] finalTestTable = new ulong[combinations];
+
+        ulong[] testTable = new ulong[combinations];
+
+        while (fail)
+        {
+            fail = false;
+            ulong randomMagicNumber = GenerateRandomMagicNumber();
+            Array.Clear(testTable, 0, testTable.Length);
+            
+            for(int i = 0; i < combinations; i++)
+            {
+                int index = (int)((occupancies[i] * randomMagicNumber) >> shift);
+
+           
+                if (testTable[index] == 0)
+                {
+                    testTable[index] = attacks[i];   
+                }
+                else if (testTable[index] == attacks[i])
+                {
+                    continue;
+                }
+                else
+                {
+                    fail = true;
+                    break;
+                }
+
+            }
+
+            if(!fail)
+            {
+                finalMagicNumber = randomMagicNumber;
+                finalTestTable = testTable;
+            }
+
+        } 
+
+        RookMagicNumbers[square] = finalMagicNumber; 
+        RookAttacks[square] = finalTestTable;
+
+         
+        
+    }    
+
+    static ulong randomState = 1804289383UL; // Standard non-zero seed
+    public static ulong GetRandomUlong()
+    {
+        unchecked 
+        {
+            ulong x = randomState;
+            x ^= x >> 12;
+            x ^= x << 25;
+            x ^= x >> 27;
+            randomState = x;
+            return x * 2685821657736338717UL;
+        }
+    }
+
+    public static ulong GenerateRandomMagicNumber()
+    {
+        return GetRandomUlong() & GetRandomUlong() & GetRandomUlong();
+    }
+
+    public static void PrintMagicNumber(int square)
+    {
+        CalculateRookTable(square);
+        Console.Write($"{RookMagicNumbers[square]}, ");
+    }
+
+
+    //Magic number = 36031546068615176
+    // 4647733782040838144
 
 
 
 
 
 }
+
 
 
 

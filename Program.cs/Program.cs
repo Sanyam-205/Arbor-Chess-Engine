@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 class Program
 {
     static void Main()
@@ -79,25 +80,92 @@ class Program
         moveGenerator.GenerateKingMoves(board, moveList, ref moveCount);
         moveGenerator.GeneratePawnMoves(board, moveList, ref moveCount);
         
-        for(int i = 0; i < moveCount; i++)
-        {
-            Console.WriteLine($"StartSquare = {IndexToSquare(moveList[i].StartSquare)} and Target Square = {IndexToSquare(moveList[i].TargetSquare)}");
-        }
+        // for(int i = 0; i < moveCount; i++)
+        // {
+        //     Console.WriteLine($"StartSquare = {IndexToSquare(moveList[i].StartSquare)} and Target Square = {IndexToSquare(moveList[i].TargetSquare)}");
+        // }
         
         // Move move = new Move(1,18);
         // board.MovePiece(move);
         // BoardPrinter.PrintBitboard(board);
 
+        // for (int i = 0; i<64; i++)
+        // {
+        //     ulong rookAttack = AttackTables.GenerateRookMask(i);    
+        //     string s = $"Rook an square {IndexToSquare(i)}";
+        //     Console.WriteLine($"Bitboatd = {rookAttack}");
+        //     PrintUlongBitboard(rookAttack, s);
+            
+        // }
         
+        // for (int i = 0; i<64; i++)
+        // {
+        //     ulong bishopAttack = AttackTables.GenerateBishopAttacks(i, 0UL);    
+        //     string s = $"bishop attack on fly {IndexToSquare(i)}";
+        //     Console.WriteLine($"Bitboard = {bishopAttack}");
+        //     PrintUlongBitboard(bishopAttack, s);
+            
+        // }
+        
+        
+        // int[] relevantRookBits = new int[64];
+        // for(int rank = 7; rank >= 0; rank--)
+        // {
+        //     for (int file = 0; file <= 7; file++)
+        //     {
+        //         int square = rank*8 + file;
+
+        //         ulong rookAttack = AttackTables.GenerateBishopMask(square);
+                
+        //         int count = 0;
+        //         while(rookAttack != 0)
+        //         {
+                        
+                        
+        //             // Console.WriteLine($"Bitboard = {bishopAttack}");
+        //             // PrintUlongBitboard(bishopAttack, "with blocker on 36 ");
+                    
+        //             int possibleMoves = BitOperations.TrailingZeroCount(rookAttack);
+        //             rookAttack &=rookAttack-1;
+        //             count+=1;
+                    
+        //         }
+        //         relevantRookBits[square] = count;
+        //         Console.Write($"{relevantRookBits[square]}, ");
+        //         //Console.Write($"{count}, ");
+        //     }
+        // }    
 
         
         
+        /*
+        6, 5, 5, 5, 5, 5, 5, 6, 
+        5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5, 7, 7, 7, 7, 5, 5, 
+        5, 5, 7, 9, 9, 7, 5, 5, 
+        5, 5, 7, 9, 9, 7, 5, 5, 
+        5, 5, 7, 7, 7, 7, 5, 5, 
+        5, 5, 5, 5, 5, 5, 5, 5, 
+        6, 5, 5, 5, 5, 5, 5, 6
+        */
 
 
         //Generate knight moves
         // moveGenerator.GenerateKnightMoves(board, moveList, ref moveCount);
         
+        
+        for(int rank = 7; rank >= 0; rank--)
+        {
+            for (int file = 0; file <= 7; file++)
+            {
+                int square = rank*8 + file;
+                
+                AttackTables.CalculateRookTable(square);
+                Console.Write($"{AttackTables.RookMagicNumbers[square]}, ");       
 
+
+            }
+        }
         
            
 
@@ -121,7 +189,7 @@ class Program
             {
                 int square = rank * 8 + file;
                 ulong mask = 1UL << square;
-                char bitChar = (bitboard & mask) != 0 ? '1' : '0';
+                char bitChar = (bitboard & mask) != 0 ? '1' : '.';
                 Console.Write(bitChar + " ");
             }
             Console.WriteLine();
