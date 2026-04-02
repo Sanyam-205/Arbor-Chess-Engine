@@ -175,8 +175,7 @@ class Program
         
         // AttackTables.PrintResult();
            
-
-
+        
         Console.ReadLine(); 
     }
 
