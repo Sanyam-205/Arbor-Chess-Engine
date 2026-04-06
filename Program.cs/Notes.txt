@@ -1,0 +1,111 @@
+The flags need to be generated along with the move generation.
+
+
+public void MovePiece (Move move)
+    {
+
+
+        tempEnPassantSquare = enPassantSquare;
+        enPassantSquare = 0;
+
+        // find out which piece is moving. 
+        // since we're not using an array but bitboards, we can't update the board without updating the actual bitboard of that specific piece. 
+        // we will use a XOR operator. As the name suggests, XOR returns 0 when value is 1 and 1 when value is 0. For our bitboard, it would simply turn the bit on start square to 0 and will turn on the bit on target square essentially moving the piece.
+
+        
+        ulong startMask = 1UL << move.StartSquare; //create a ulong variable where every bit is 0 other than the one on StartSquare
+        ulong targetMask = 1UL << move.TargetSquare; //create a ulong variable where every bit is 0 other than the one on TargetSquare
+
+        ulong moveMask = (1UL << move.StartSquare) | (1UL << move.TargetSquare); ////create another ulong variable where every bit is 0 other than those two bits where startMask and targetMask are 1
+
+
+        // Find the captured piece before processing the move to prevent early break bugs
+        
+
+        for (int i = 0; i<12; i++) // loop through pieceBitboards list
+        {
+
+            if((startMask & pieceBitboards[i])!= 0) //Verify if a non empty square is selected. It means if starting square bitboard and piecebitboard both store 1. In essense, the square isn't empty.
+            {
+                if (tempCapturedPiece != -1)
+                {
+                    pieceBitboards[tempCapturedPiece] &= ~targetMask;
+                }
+                
+                //promotion logic
+                if (move.Flag >= (int)Move.MoveFlag.promoteToQueen && move.Flag <= (int)Move.MoveFlag.promoteToBishop) 
+                {
+                   HandlePromotion(move, i, startMask, targetMask); 
+                }
+
+                // en passant logic
+                else if (move.Flag == (int)Move.MoveFlag.enPassantCapture)
+                {
+                    HandleEnPassant(move, i, startMask, targetMask);
+                }
+
+                
+
+                else 
+                {
+                    pieceBitboards[i] ^= moveMask; // Normal teleport. XOR operator. Since pieceBitboard and moveMask will be 1 only at start square, it will turn start square to 0. Since moveMask will be 0 for pieceBitboard, it will turn it 1, effectively moving the piece.
+                    
+                    if ((i == 0 || i == 6) && (move.StartSquare ^ move.TargetSquare) == 16)
+                    {
+                        // Find the skipped square exactly in double pawn push
+                        int skippedIndex = (colorToMove == 0) ? move.StartSquare + 8 : move.StartSquare - 8;
+                        
+                        enPassantSquare = 1UL << skippedIndex;
+                        
+                    }
+                }
+
+                break;
+                
+                
+            }
+        }
+        history[plyCount].capturedPieceType = tempCapturedPiece;
+        history[plyCount].enPassantSquare = tempEnPassantSquare;
+        plyCount++;
+
+        colorToMove ^= 1; //reverse the turn. Again, using XOR operator with 1 because 0 ^ 1 = 1, 1 ^ 1 = 0
+
+
+    }
+
+
+
+
+
+
+
+0 0 0 1
+0 0 1 0
+
+0 0 1 1
+
+0 1 0 0
+1 0 0 0
+
+
+
+private void HandlePromotion(Move move, int pawnIndex, ulong startMask, ulong targetMask)
+    {
+        pieceBitboards[pawnIndex] ^= startMask;//delete the pawn
+        int baseIndex = Move.flagToBaseIndex[move.Flag];
+        int finalPieceIndex = baseIndex + (colorToMove * 6);
+        pieceBitboards[finalPieceIndex] |= targetMask;
+
+    }   
+    private void HandleEnPassant (Move move, int pawnIndex, ulong startMask, ulong targetMask)
+    {
+        pieceBitboards[pawnIndex] ^= (startMask | targetMask);
+        int captureSquare = (colorToMove == 0) ? move.TargetSquare - 8 : move.TargetSquare + 8;
+
+        ulong captureMask = 1UL <<captureSquare;
+
+        int enemyPawnIndex = (colorToMove == 0) ? 6 : 0; // Black pawn is 6, White pawn is 0
+        pieceBitboards[enemyPawnIndex] ^= captureMask;
+
+    }

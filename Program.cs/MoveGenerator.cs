@@ -279,7 +279,7 @@ public class MoveGenerator
                 int targetSquare = BitOperations.TrailingZeroCount(whiteDoublePush);
                 int startSquare = targetSquare -16;
 
-                moveList[moveCount++] = new Move(startSquare, targetSquare, 0);
+                moveList[moveCount++] = new Move(startSquare, targetSquare, 6); // flag for double push is 6
                 
 
                 whiteDoublePush &= (whiteDoublePush-1);   
@@ -367,6 +367,29 @@ public class MoveGenerator
                 whiteLeftPromotingCapture &= (whiteLeftPromotingCapture - 1);
             }
 
+            if (board.enPassantSquare != 0)
+            {
+                ulong whiteRightEPCapture = ((whiteStandardPawn & notHFile) << 9) & board.enPassantSquare;
+                ulong whiteLeftEPCapture = ((whiteStandardPawn & notAFile) << 7) & board.enPassantSquare;
+
+                while (whiteRightEPCapture != 0)
+                {
+                    int targetSquare = BitOperations.TrailingZeroCount(whiteRightEPCapture);
+                    int startSquare = targetSquare - 9;
+
+                    moveList[moveCount++] = new Move(startSquare, targetSquare, 5); // 5 is the flag for en passant
+                    whiteRightEPCapture &= (whiteRightEPCapture - 1);
+                }
+
+                while (whiteLeftEPCapture != 0)
+                {
+                    int targetSquare = BitOperations.TrailingZeroCount(whiteLeftEPCapture);
+                    int startSquare = targetSquare - 7;
+
+                    moveList[moveCount++] = new Move(startSquare, targetSquare, 5);
+                    whiteLeftEPCapture &= (whiteLeftEPCapture - 1);
+                }
+            }
         }
 
 
@@ -399,7 +422,7 @@ public class MoveGenerator
                 int targetSquare = BitOperations.TrailingZeroCount(blackDoublePush);
                 int startSquare = targetSquare + 16;
 
-                moveList[moveCount++] = new Move (startSquare, targetSquare, 0);
+                moveList[moveCount++] = new Move (startSquare, targetSquare, 6); // flag for double push is 6
                 
 
                 blackDoublePush &= (blackDoublePush-1);
@@ -474,6 +497,29 @@ public class MoveGenerator
                 blackLeftPromotingCapture &= (blackLeftPromotingCapture - 1);
             }
 
+            if (board.enPassantSquare != 0)
+            {
+                ulong blackRightEPCapture = ((blackStandardPawns & notHFile) >> 7) & board.enPassantSquare;
+                ulong blackLeftEPCapture = ((blackStandardPawns & notAFile) >> 9) & board.enPassantSquare;
+
+                while (blackRightEPCapture != 0)
+                {
+                    int targetSquare = BitOperations.TrailingZeroCount(blackRightEPCapture);
+                    int startSquare = targetSquare + 7;
+
+                    moveList[moveCount++] = new Move(startSquare, targetSquare, 5); // 5 is the flag for en passant
+                    blackRightEPCapture &= (blackRightEPCapture - 1);
+                }
+
+                while (blackLeftEPCapture != 0)
+                {
+                    int targetSquare = BitOperations.TrailingZeroCount(blackLeftEPCapture);
+                    int startSquare = targetSquare + 9;
+
+                    moveList[moveCount++] = new Move(startSquare, targetSquare, 5);
+                    blackLeftEPCapture &= (blackLeftEPCapture - 1);
+                }
+            }
 
 
         }

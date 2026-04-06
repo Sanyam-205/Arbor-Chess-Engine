@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+// using static Board;
 class Program
 {
+    
     static void Main()
     {
         Board board = new Board();
 
-        string fen0 = "r3r1k1/p3bppp/1q2pn2/3p4/3p1B2/1PN2Q2/P1P2PPP/3R1RK1 w - - 0 2";
+    
+        
+        // string fen0 = "r3r1k1/p3bppp/1q2pn2/3p4/3p1B2/1PN2Q2/P1P2PPP/3R1RK1 w - - 0 2";
         // string fen1 = "r3r1k1/1bpp1p1p/p2b1q2/1p1npnN1/B2PP3/1PN1B3/P1PQ1PPP/R3R1K1 b KQkq - 0 1";
         // string fen2 = "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 3 4"; //scholar's mate
         // string fen3 = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"; //scillian
@@ -16,8 +20,9 @@ class Program
         // string fen6 = "r3rkq1/p2qbp1q/1q3n2/3p3q/5Bq1/1PN2Q2/P1P1pPPP/3R1RK1 b - - 0 2";
         // string fen7 = "1R6/5pk1/1P4pp/8/1r6/4p2P/3p2P1/3K4 w - - 0 2";
         // string fen8 = "11R6/1r3pk1/6pp/8/8/4pQ1P/3p2P1/3K4 w - - 0 2";
-        // string fen8 = "8/8/8/8/8/r7/P7/8 w - - 0 1";
-        FenUtility.LoadFromFen(fen0, board);
+        // string fen8 = "1R6/1r4k1/6pp/8/5pP1/4p2P/3p4/3K4 b - g3 0 2";
+        string fen9 = "1R6/6k1/6pp/8/5p2/4pnbP/3p2P1/1r2K3 w - - 0 2";
+        FenUtility.LoadFromFen(fen9, board);
 
         // PrintUlongBitboard(board.colorBitboard[(int)Board.PieceTeam.WhitePieces], "White Pieces Bitboard");
         // PrintUlongBitboard(board.colorBitboard[(int)Board.PieceTeam.BlackPieces], "Black Pieces Bitboard");
@@ -78,18 +83,24 @@ class Program
         
         // MakeMove(board);
         // AttackTables.GenerateRookAttackTable();
-        // moveGenerator.GenerateKnightMoves(board, moveList, ref moveCount);
-        // moveGenerator.GenerateKingMoves(board, moveList, ref moveCount);
-        // moveGenerator.GeneratePawnMoves(board, moveList, ref moveCount);
-        // moveGenerator.GenerateRookMoves(board, moveList, ref moveCount);
-        // moveGenerator.GenerateBishopMoves(board, moveList, ref moveCount);
-        // moveGenerator.GenerateQueenMoves(board, moveList, ref moveCount);
+        moveGenerator.GenerateKnightMoves(board, moveList, ref moveCount);
+        moveGenerator.GenerateKingMoves(board, moveList, ref moveCount);
+        moveGenerator.GeneratePawnMoves(board, moveList, ref moveCount);
+        moveGenerator.GenerateRookMoves(board, moveList, ref moveCount);
+        moveGenerator.GenerateBishopMoves(board, moveList, ref moveCount);
+        moveGenerator.GenerateQueenMoves(board, moveList, ref moveCount);
         
-        // for(int i = 0; i < moveCount; i++)
-        // {
-        //     Console.WriteLine($"StartSquare = {IndexToSquare(moveList[i].StartSquare)} and Target Square = {IndexToSquare(moveList[i].TargetSquare)}");
-        // }
+        for(int i = 0; i < moveCount; i++)
+        {
+            Console.WriteLine($"StartSquare = {IndexToSquare(moveList[i].StartSquare)} and Target Square = {IndexToSquare(moveList[i].TargetSquare)}");
+        }
         
+        // ulong king = (board.colorToMove == 0) ? board.pieceBitboards[(int)Piece.WhiteKing] : board.pieceBitboards[(int)Piece.BlackKing];
+        
+        // int kingPos = BitOperations.TrailingZeroCount(king);
+        // Console.WriteLine(board.IsSquareAttacked(kingPos,board.colorToMove));
+
+
         // Move move = new Move(1,18);
         // board.MovePiece(move);
         // BoardPrinter.PrintBitboard(board);

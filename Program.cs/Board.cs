@@ -2,14 +2,37 @@
 using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Xml;
+
+public struct BoardState
+{
+    public int capturedPieceType;
+    public ulong enPassantSquare;
+    public int castlingRights;
+}
+
 public class Board
 {
     
+    public BoardState[] history = new BoardState[1024];
+    public int plyCount = 0;
+
     //combined 64 bit integers for black and white pieces
     public ulong AllPieces;
 
     public int colorToMove, castlingRights;
     public ulong enPassantSquare;
+
+
+    public static int[] castlingRightsUpdate = new int[64]; //stores bord information for the specific squares for en passant.
+    static readonly ulong[] rookCastleMasks =
+    {
+        0b0000000000000000000000000000000000000000000000000000000010100000, // white kingside       Flag = 7     
+        0b0000000000000000000000000000000000000000000000000000000000001001, // white queenside      Flag = 8 
+
+        0b1010000000000000000000000000000000000000000000000000000000000000, // black kingside       Flag = 9
+        0b0000100100000000000000000000000000000000000000000000000000000000 // black queenside       Flag = 10
+    }; 
 
     
 
@@ -51,90 +74,257 @@ public class Board
     */
 
     
-
-    public void MovePiece (Move move)
+    public void MakeMove(Move move)
     {
-        enPassantSquare = 0;
+        //Generate Masks for starting and ending square
+        ulong startMask = 1UL << move.StartSquare;
+        ulong targetMask = 1UL << move.TargetSquare;
 
-        // find out which piece is moving. 
-        // since we're not using an array but bitboards, we can't update the board without updating the actual bitboard of that specific piece. 
-        // we will use a XOR operator. As the name suggests, XOR returns 0 when value is 1 and 1 when value is 0. For our bitboard, it would simply turn the bit on start square to 0 and will turn on the bit on target square essentially moving the piece.
+        ulong moveMask = (1UL << move.StartSquare) | (1UL << move.TargetSquare);
 
-        
-        ulong startMask = 1UL << move.StartSquare; //create a ulong variable where every bit is 0 other than the one on StartSquare
-        ulong targetMask = 1UL << move.TargetSquare; //create a ulong variable where every bit is 0 other than the one on TargetSquare
+        int movingPiece = -1;
+        int capturedPiece = -1;
 
-        ulong moveMask = (1UL << move.StartSquare) | (1UL << move.TargetSquare); ////create another ulong variable where every bit is 0 other than those two bits where startMask and targetMask are 1
-
-
-        for (int i = 0; i<12; i++) // loop through pieceBitboards list
+        for (int i = 0; i < 12; i++)
         {
-            if((startMask & pieceBitboards[i])!= 0) //Verify if a non empty square is selected. It means if starting square bitboard and piecebitboard both store 1. In essense, the square isn't empty.
+            if ((startMask &  (pieceBitboards[i])) != 0) movingPiece = i;
+            if ((targetMask & (pieceBitboards[i])) != 0) capturedPiece = i;
+        }
+
+
+
+        //Take snapshot of the current board state
+        history[plyCount].capturedPieceType = capturedPiece;
+        history[plyCount].enPassantSquare = enPassantSquare; 
+        history[plyCount].castlingRights = castlingRights;   
+        plyCount++;
+        
+        enPassantSquare = 0; // set enPassantSquare back to 0 at start of new move
+
+        //Capture
+        if(capturedPiece != -1) //Remove the captured piece
+        {
+            pieceBitboards[capturedPiece] &= ~targetMask; 
+        }
+        
+
+        //teleport the piece (normal move)
+        pieceBitboards[movingPiece] ^= moveMask; // teleport the piece
+
+        //teleport the rook if castled
+        if(move.Flag >= (int)Move.MoveFlag.whiteKingSideCastle && move.Flag <= (int)Move.MoveFlag.blackQueenSideCastle)
+        {
+            // if(move.Flag == (int)Move.MoveFlag.whiteKingSideCastle)
+            // {
+            //     ulong rookMask = 0000000000000000000000000000000000000000000000000000000000000100; // white kingside
+            //     pieceBitboards[(int)Piece.WhiteRooks] ^= 0000000000000000000000000000000000000000000000000000000000000001;
+            //     pieceBitboards[(int)Piece.WhiteRooks] |= rookMask;
+            
+            // }
+
+            int rookIndex = (int)Piece.WhiteRooks + (colorToMove * 6);
+            pieceBitboards[rookIndex] ^= rookCastleMasks[move.Flag - 7];
+
+        }
+
+
+
+        //Promotion
+        if(move.Flag >= (int)Move.MoveFlag.promoteToQueen && move.Flag <= (int)Move.MoveFlag.promoteToBishop)
+        {
+            //Piece already teleported.
+            //Remove the piece from its bitboard (pawn)
+            pieceBitboards[movingPiece] ^= targetMask;
+
+
+            int baseIndex = Move.flagToBaseIndex[move.Flag];
+            int finalPieceIndex = baseIndex + (colorToMove * 6);
+
+
+            //Add it to promoted piece bitboard depending upon flag
+            pieceBitboards[finalPieceIndex] |= targetMask;
+        }
+
+
+        //En Passant
+        int enemyPawn = (colorToMove == 0) ? (int)Piece.BlackPawns : (int)Piece.WhitePawns;
+        ulong enPassantVictimMask = (colorToMove == 0) ? targetMask >> 8 : targetMask << 8;
+        pieceBitboards[enemyPawn] ^= enPassantVictimMask;
+
+        //double pawn push
+        if(((movingPiece == (int)Piece.WhitePawns) || (movingPiece == (int)Piece.BlackPawns)) && (move.StartSquare ^ move.TargetSquare) == 16)
+        {
+            int skippedIndex = (colorToMove == 0) ? move.StartSquare + 8 : move.StartSquare - 8;
+            enPassantSquare = 1UL << skippedIndex;
+        }
+
+
+
+
+
+        //Castling
+        castlingRights &= castlingRightsUpdate[move.StartSquare];
+        castlingRights &= castlingRightsUpdate[move.TargetSquare];
+
+
+
+        //Turn switch
+        colorToMove ^= colorToMove;
+
+
+    }
+
+    public void UnMakeMove (Move move)
+    {
+
+        colorToMove ^= colorToMove;
+        plyCount--;
+
+        int prevCapturedPiece = history[plyCount].capturedPieceType;
+        castlingRights = history[plyCount].castlingRights; // Restore state
+        enPassantSquare = history[plyCount].enPassantSquare; // Restore state
+
+        int movingPiece = -1;
+
+        ulong targetMask = (1UL << move.TargetSquare);
+        
+        for(int i = 0; i<12; i++)
+        {
+
+            movingPiece = i;
+
+
+            if((targetMask & (pieceBitboards[i])) != 0)
             {
-                if (colorToMove == 0) //capture logic if white's turn
+
+                if (move.Flag >= (int)Move.MoveFlag.promoteToQueen && move.Flag <= (int)Move.MoveFlag.promoteToBishop) //promotion
                 {
-                    for (int j = 6; j<12; j++) //loop through 6-12 of pieceBitboards because 6-11 index contains black pieces.
-                    {
-                        pieceBitboards[j] &= ~targetMask;
-                    }
-                }
-                else //capture logic for black's turn
-                {
-                    for (int j = 0; j<6; j++) //loop through 0-6 of pieceBitboards becasue 0-5 indexes contain white pieces.
-                    {
-                        pieceBitboards[j] &= ~targetMask;
-                    }
+                    //Remove the piece from the move.TargetSquare
+                    pieceBitboards[i] ^= targetMask;
+
+                    //Place the pawn back on the previous square
+                    pieceBitboards[(int)Piece.WhitePawns + (colorToMove * 6)] |= targetMask;
+                    movingPiece = (int)Piece.WhitePawns + (colorToMove * 6);
+
+                      
                 }
                 
-                //promotion logic
-                if (move.Flag >= (int)Move.MoveFlag.promoteToQueen && move.Flag <= (int)Move.MoveFlag.promoteToBishop) 
+                else if(move.Flag >= (int)Move.MoveFlag.whiteKingSideCastle && move.Flag <= (int)Move.MoveFlag.blackQueenSideCastle) //castle
                 {
-                   HandlePromotion(move, i, startMask, targetMask); 
+                    
+                    int rookIndex = (int)Piece.WhiteRooks + (colorToMove * 6);
+                    pieceBitboards[rookIndex] ^= rookCastleMasks[move.Flag - 7];
                 }
 
-                //en passant logic
-                // else if (move.Flag == (int)Move.MoveFlag.enPassantCapture)
-                // {
-                //     HandleEnPassant(move, i, startMask, targetMask);
-                // }
-                else 
+                else if(move.Flag == (int)Move.MoveFlag.enPassantCapture) // en passant
                 {
-                    pieceBitboards[i] ^= moveMask; // Normal teleport. XOR operator. Since pieceBitboard and moveMask will be 1 only at start square, it will turn start square to 0. Since moveMask will be 0 for pieceBitboard, it will turn it 1, effectively moving the piece.
+                    int pawnTypeToRestore = (colorToMove == 0) ? (int)Piece.BlackPawns : (int)Piece.WhitePawns;
+                    ulong enPassantVictimMask = (colorToMove == 0) ? targetMask >> 8 : targetMask << 8;
+                    pieceBitboards[pawnTypeToRestore] ^= enPassantVictimMask;
                 }
+
 
                 break;
                 
-                
             }
+            
         }
-        colorToMove ^= 1; //reverse the turn. Again, using XOR operator with 1 because 0 ^ 1 = 1, 1 ^ 1 = 0
 
+        ulong moveMask = (1UL << move.StartSquare) | (1UL << move.TargetSquare);
+        pieceBitboards[movingPiece] ^= moveMask; // Remove the piece
 
+        //Put the piece back
+        if(prevCapturedPiece != -1)
+        {
+            pieceBitboards[prevCapturedPiece] |= targetMask;
+        }
     }
 
-    private void HandlePromotion(Move move, int pawnIndex, ulong startMask, ulong targetMask)
-    {
-        pieceBitboards[pawnIndex] ^= startMask;//delete the pawn
-        int baseIndex = Move.flagToBaseIndex[move.Flag];
-        int finalPieceIndex = baseIndex + (colorToMove * 6);
-        pieceBitboards[finalPieceIndex] |= targetMask;
 
-    }   
-    private void HandleEnPassant (Move move, int pawnIndex, ulong startMask, ulong targetMask)
-    {
-        pieceBitboards[pawnIndex] ^= (startMask | targetMask);
-        int captureSquare = (colorToMove == 0) ? move.TargetSquare - 8 : move.TargetSquare + 8;
 
-        ulong captureMask = 1UL <<captureSquare;
-
-        int enemyPawnIndex = (colorToMove == 0) ? 6 : 0; // Black pawn is 6, White pawn is 0
-        pieceBitboards[enemyPawnIndex] ^= captureMask;
-
-    }
 
      
+    public bool IsSquareAttacked(int square, int defendingColor)
+    {
+        //if we have to check for white king is under attack, we use the whitePawnAttack table as pawn mask. 
+        // We do so because if the white king is on square 20, it can be attacked by a black pawn on square 27 or 29. Since a white pawn on square 20 also attacks square 27 and 29, we reverse it's logic. 
+        // If whitePawnAttack table for the square coincides with black pawn on that square, the king on that square will be attacked.
+        ulong pawnMask = (defendingColor == 0)? AttackTables.whitePawnAttacks[square] : AttackTables.blackPawnAttacks[square];
+        ulong enemyPawnBitboard = (defendingColor == 0) ? pieceBitboards[(int)Piece.BlackPawns] : pieceBitboards[(int)Piece.WhitePawns]; 
+        if((pawnMask & enemyPawnBitboard) != 0)
+        {
+            return true;
+        }  
+
+        //Check if a square is under attack by a knight
+        ulong enemyKnightBitboard = (defendingColor == 0) ? pieceBitboards[(int)Piece.BlackKnights] : pieceBitboards[(int)Piece.WhiteKnights];
+        ulong knightMask = AttackTables.knightAttacks[square];
+        if((knightMask & enemyKnightBitboard) !=0)
+        {
+            return true;
+        }
+        
+        
+        // check if a square is under attack by a king. 
+        ulong enemyKingBitboard = (defendingColor == 0) ? pieceBitboards[(int)Piece.BlackKing] : pieceBitboards[(int)Piece.WhiteKing];
+        ulong kingMask = AttackTables.kingAttacks[square];
+        if((kingMask & enemyKingBitboard) !=0)
+        {
+            return true;
+        }
+        
+
+        //check if a square is under attack by the sliders
+        ulong diagonalMask = AttackTables.GetBishopAttacks(square, AllPieces);
+        ulong enemyBishop = (defendingColor == 0) ? pieceBitboards[(int)Piece.BlackBishops] : pieceBitboards[(int)Piece.WhiteBishops];
+        ulong enemyQueen = (defendingColor == 0) ? pieceBitboards[(int)Piece.BlackQueens] : pieceBitboards[(int)Piece.WhiteQueens];
+        if((diagonalMask & (enemyBishop|enemyQueen)) != 0)
+        {
+            return true;
+        }
+
+        ulong straightMak = AttackTables.GetRookAttacks(square, AllPieces);
+        ulong enemyRook = (defendingColor == 0) ? pieceBitboards[(int)Piece.BlackRooks] : pieceBitboards[(int)Piece.WhiteRooks];
+        if((straightMak &(enemyRook|enemyQueen))!=0)
+        {
+            return true;
+        }
+        
 
 
+
+
+
+        return false;
+    }
+
+
+    public static void Innit()
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            castlingRightsUpdate[i] = 15;
+        }
+
+        castlingRightsUpdate[4] = 12; // white king 
+        castlingRightsUpdate[7] = 14; // rook h1
+        castlingRightsUpdate[0] = 13; // rook a1
+        
+        castlingRightsUpdate[60] = 3; // black king
+        castlingRightsUpdate[63] = 11; // rook h8
+        castlingRightsUpdate[56] = 7; // rook a8
+
+
+        /// 1111 - No castling desabled
+        
+        ///  14     1110 - White kindside castling disabled
+        ///  13     1101 - White queenside castling disabled
+        ///  12     1100 - White castling disabled 
+              
+        ///  11     1011 - Black kingside castling disabled
+        ///   7     0111 - Black queenside castling disabled
+        ///   3     0011 - Black castling disabled
+    }
 
 
 }

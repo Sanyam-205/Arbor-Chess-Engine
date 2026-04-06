@@ -30,12 +30,29 @@ public struct Move
     public static readonly int[] flagToBaseIndex = {0,3,1,0,2};
     public enum MoveFlag
     {
-        normalMove, promoteToQueen, promoteToKnight, promoteToRook, promoteToBishop, enPassantCapture, doublePawnPush, kingSideCastle, queenSideCastle
+        normalMove, promoteToQueen, promoteToKnight, promoteToRook, promoteToBishop, enPassantCapture, doublePawnPush, whiteKingSideCastle, whiteQueenSideCastle, blackKingSideCastle, blackQueenSideCastle
     }
+    /*
+        Normal move -               0 0 0 0     (0)    
+        
+        Queen Promotion -           0 0 0 1     (1)
+        Knight Promotion -          0 0 1 0     (2)
+        Rook Promotion -            0 0 1 1     (3)
+        Bishop Promotion -          0 1 0 0     (4)
+        
+        enPassant Capture -         0 1 0 1     (5)
+        doublePawnPush -            0 1 1 0     (6)
+        
+        whiteKingSideCastle -            0 1 1 1     (7)
+        whiteQueenSideCastle -           1 0 0 0     (8)
+        blackKingSideCastle -            1 0 0 1     (9)
+        blackQueenSideCastle -           1 0 1 0     (10)
+    */
 
 
     public Move(ushort value) => Value = value; //this is a constructor which i don't know the purpose of. duhh
 
+    // THIS IS ACTUALLY RESPONSIBLE FOR MOVES.
     public Move(int StartSquare, int TargetSquare, int Flag = 0)
     {
         //the method Move gets three integer values, startSquare, targetSquare and flag. Our Value is a 16 bit unsigned integer, with 3 sets of bits representing different things. We keep the targetSquare as is, shift startSquare by 6 bits and flag by 12 bits.
