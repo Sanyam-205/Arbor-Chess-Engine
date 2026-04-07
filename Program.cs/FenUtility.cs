@@ -33,6 +33,11 @@ public class FenUtility
     {
         //initializing castling rights to 0
         board.castlingRights = 0;
+
+        for (int i = 0; i < 64; i++)
+        {
+            board.pieceOnSquare[i] = -1;
+        }
         
         //splitting fen string in parts whenever we encounter a space, it would result in 6 different parts each representing a separate parameter.
         string[] fenParts = boardFen.Split(' ');
@@ -66,39 +71,51 @@ public class FenUtility
                 switch (c)
                 {
                     case 'p': board.pieceBitboards[(int)Piece.BlackPawns] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.BlackPawns;
                     break;
 
                     case 'P': board.pieceBitboards[(int)Piece.WhitePawns] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.WhitePawns;
                     break;
 
                     case 'r' : board.pieceBitboards[(int)Piece.BlackRooks] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.BlackRooks;
                     break;
                     
                     case 'R' : board.pieceBitboards[(int)Piece.WhiteRooks] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.WhiteRooks;
                     break;
                     
                     case 'b' : board.pieceBitboards[(int)Piece.BlackBishops] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.BlackBishops;
                     break;
                     
                     case 'B' : board.pieceBitboards[(int)Piece.WhiteBishops] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.WhiteBishops;
                     break;
 
                     case 'n' : board.pieceBitboards[(int)Piece.BlackKnights] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.BlackKnights;
                     break;
                     
                     case 'N' : board.pieceBitboards[(int)Piece.WhiteKnights] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.WhiteKnights;
                     break;
 
                     case 'q' : board.pieceBitboards[(int)Piece.BlackQueens] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.BlackQueens;
                     break;
                     
                     case 'Q' : board.pieceBitboards[(int)Piece.WhiteQueens] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.WhiteQueens;
                     break;
 
                     case 'k' : board.pieceBitboards[(int)Piece.BlackKing] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.BlackKing;
                     break;
 
                     case 'K' : board.pieceBitboards[(int)Piece.WhiteKing] |= 1UL << square;
+                    board.pieceOnSquare[square] = (int)Piece.WhiteKing;
                     break;
                 }
 

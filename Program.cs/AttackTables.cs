@@ -412,7 +412,8 @@ public static class AttackTables
 
     public static void GenerateBishopAttackTable()
     {
-        for(int i = 9; i < 64; i++)
+     
+        for(int i = 0; i<64; i++)
         {
             InitializeBishopMagicTable(i);
         }

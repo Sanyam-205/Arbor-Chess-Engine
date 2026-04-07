@@ -11,7 +11,7 @@ class Program
 
     
         
-        // string fen0 = "r3r1k1/p3bppp/1q2pn2/3p4/3p1B2/1PN2Q2/P1P2PPP/3R1RK1 w - - 0 2";
+        string fen0 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         // string fen1 = "r3r1k1/1bpp1p1p/p2b1q2/1p1npnN1/B2PP3/1PN1B3/P1PQ1PPP/R3R1K1 b KQkq - 0 1";
         // string fen2 = "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 3 4"; //scholar's mate
         // string fen3 = "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"; //scillian
@@ -21,8 +21,8 @@ class Program
         // string fen7 = "1R6/5pk1/1P4pp/8/1r6/4p2P/3p2P1/3K4 w - - 0 2";
         // string fen8 = "11R6/1r3pk1/6pp/8/8/4pQ1P/3p2P1/3K4 w - - 0 2";
         // string fen8 = "1R6/1r4k1/6pp/8/5pP1/4p2P/3p4/3K4 b - g3 0 2";
-        string fen9 = "1R6/6k1/6pp/8/5p2/4pnbP/3p2P1/1r2K3 w - - 0 2";
-        FenUtility.LoadFromFen(fen9, board);
+        //string fen9 = "1R6/6k1/6pp/8/5p2/4pnbP/3p2P1/1r2K3 w - - 0 2";
+        FenUtility.LoadFromFen(fen0, board);
 
         // PrintUlongBitboard(board.colorBitboard[(int)Board.PieceTeam.WhitePieces], "White Pieces Bitboard");
         // PrintUlongBitboard(board.colorBitboard[(int)Board.PieceTeam.BlackPieces], "Black Pieces Bitboard");
@@ -36,7 +36,7 @@ class Program
         int moveCount = 0;
 
 
-        // BoardPrinter.PrintBitboard(board);
+        BoardPrinter.PrintBitboard(board);
 
         // Move myMove = new Move(12,53);
 
