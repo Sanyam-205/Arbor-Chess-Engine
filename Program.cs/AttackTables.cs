@@ -93,6 +93,8 @@ public static class AttackTables
     public static readonly ulong[] whitePawnAttacks = new ulong [64];
     public static readonly ulong[] blackPawnAttacks = new ulong[64];
 
+    public static readonly ulong[][] pawnAttacks = {whitePawnAttacks, blackPawnAttacks};
+
     public static readonly ulong[] knightAttacks = new ulong[64];
     public static readonly ulong[] kingAttacks = new ulong[64];
     public static ulong[][] bishopAttacks = new ulong[64][];
