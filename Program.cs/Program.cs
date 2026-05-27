@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
+using static Board;
 
 class Program
 {
@@ -8,9 +10,12 @@ class Program
         
         Board board = new Board();
         MoveGenerator moveGenerator = new MoveGenerator(); 
-        string fen = TestPositions.fen0;
+        Evaluation evaluation = new Evaluation();
+        string fen = "rnb1kb1r/pppppppp/8/8/8/8/PPPP1PPP/1NBQKB1R w Kkq - 0 1";
         
         FenUtility.LoadFromFen(fen, board);
+        Console.WriteLine(evaluation.EvaluatePosition(board));
+        // Console.WriteLine(BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteBishops]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackBishops]));
 
         
 

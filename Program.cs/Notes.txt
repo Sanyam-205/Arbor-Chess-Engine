@@ -194,3 +194,7 @@ private void HandlePromotion(Move move, int pawnIndex, ulong startMask, ulong ta
 
     FINALLY GOT PERFT TO WORK FOR SOME RATHER COMPLEX POSITIONS. LETS FUCKING GOOOOOOOOOOOOOOOO
     BOOM BITCHHH!
+
+
+    TODO - Optimize move generation for pinned pieces, checks etc. Will do this later.
+    TODO - instead of repeatedly calling PopCount during evaluation, maintain incremental material counts during make/unmake move
