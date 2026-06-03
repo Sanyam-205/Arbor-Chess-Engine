@@ -5,7 +5,7 @@ using static Board;
 
 public class Search
 {
-    public int nodeCount;
+    public int nodeCount, leafCount;
     //alpha is the highest score the AI is guaranteed to achieve. Good for AI
     //beta is the lowest score the opponent can have. Good for human
     /*
@@ -27,6 +27,7 @@ public class Search
     public int StartSearch(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta)
     {
         nodeCount = 0; // Clear the board for the new search
+        leafCount = 0;
         return NegaMax(board, moveGenerator, evaluation, depth, alpha, beta);
     }
 
@@ -34,8 +35,11 @@ public class Search
     {
         nodeCount++;//debug code
 
-        if (depth == 0) return evaluation.EvaluatePosition(board);
-
+        if (depth == 0) 
+        {
+            leafCount++;
+            return evaluation.EvaluatePosition(board);
+        }
         //Populate moveList with pseudolegal moves
         Move[] moveList = new Move[256];
         int moveCount = 0;
@@ -57,7 +61,10 @@ public class Search
         //run moves in moveList through the legality check
         for (int i = 0; i < moveCount; i++)
         {
-
+            //Selection sort
+        #region selection sort    
+            
+            
             int bestMoveIndex = i;
 
             for(int j = i; j < moveCount; j++)
@@ -77,9 +84,12 @@ public class Search
             int temp = moveScore[i];
             moveScore[i] = moveScore[bestMoveIndex];
             moveScore[bestMoveIndex] = temp;
+        
+        
+        
+        #endregion    
             
-            
-            
+            // continuation of search
             Move move = moveList[i];
             board.MakeMove(move);
 
@@ -101,6 +111,8 @@ public class Search
             board.UnmakeMove(move);
 
             //Alpha-Beta pruning
+        #region alpha beta pruning
+
             if (score >= beta) 
             {
                 return score; //If this branch leads to a worse outcome, do not consider it. Return beta and get out of the path.
@@ -110,6 +122,8 @@ public class Search
             {
                 alpha = score; //We found a better move for ourselves
             }
+
+        #endregion    
 
         }
 

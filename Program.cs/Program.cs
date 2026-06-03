@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using static Board;
@@ -16,7 +17,14 @@ class Program
         Search search = new Search();
         Evaluation evaluation = new Evaluation();
 
-        string fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+        // perft6 - kiwipete
+        // fen0 - starting position
+        // fen1 - middlegame (mine possibly)
+        // perft2 - middlegame (perft)
+        // fen3 - scillian defense
+        // fen13 - endgame (mine)
+
+        string fen = TestPositions.perft2;
         
         //"8/8/2K5/7q/1k6/8/8/6r1 b - - 0 1"
         FenUtility.LoadFromFen(fen, board);
@@ -24,13 +32,28 @@ class Program
         // Console.WriteLine(BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteBishops]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackBishops]));
 
         int infinity = 9999999;
-        int searchDepth = 6;
+        int searchDepth = 5;
 
-        search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity);
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        
 
+        for (int i = 0; i < 100; i++)
+        {
+            search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity);
+        }
+
+        stopwatch.Stop();
+
+        double averageMilliseconds = stopwatch.Elapsed.TotalMilliseconds / 100.0;
         
-        Console.WriteLine($"Best score for this position is {search.nodeCount}");
+        // Console.WriteLine($"Leaf count =  {search.leafCount} \nNode count = {search.nodeCount}");
         
+        double nps = (search.nodeCount * 100) / stopwatch.Elapsed.TotalSeconds;
+        Console.WriteLine($"Average Time: {averageMilliseconds:F2} ms");
+        Console.WriteLine($"NPS: {nps:N0}");
+        
+        // Console.WriteLine($"Time: {averageMilliseconds:F2} ms");
+        // Console.WriteLine($"NPS: {nps:N0}");
         
         
     

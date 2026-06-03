@@ -13,6 +13,7 @@ public static class TestPositions
     public const string fen10 = "r3k2r/pp2bppp/1qnppn2/2p5/2bPP3/2N1BN2/PPPQ1PPP/R3K2R w KQkq - 0 1"; // white kingside COULD NOT be done
     public const string fen11 = "r3k2r/pp2bppp/1qnppn2/2p5/2bPP3/2NNB3/PPPQ1PPP/R3K2R w KQkq - 0 1"; // white kingside castling could be done
     public const string fen12 = "1R6/1r4k1/6pp/8/5pP1/4p2P/3p4/3K4 b - g3 0 2";
+    public const string fen13 = "5q1k/6p1/R1Q4p/1p1p4/1P6/2P2P2/1P3PKP/3r4 w - - 0 26"; //endgame
 
     public const string perft2 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
     public const string perft3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ";
