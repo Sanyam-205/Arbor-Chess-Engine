@@ -33,6 +33,7 @@ public class FenUtility
     {
         //initializing castling rights to 0
         board.castlingRights = 0;
+        board.phaseScore = 0; //initialize phase score to 0 so it can be updated in the switch statement.
 
         for (int i = 0; i < 64; i++)
         {
@@ -80,34 +81,42 @@ public class FenUtility
 
                     case 'r' : board.pieceBitboards[(int)Piece.BlackRooks] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.BlackRooks;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.BlackRooks];
                     break;
                     
                     case 'R' : board.pieceBitboards[(int)Piece.WhiteRooks] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.WhiteRooks;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.WhiteRooks];
                     break;
                     
                     case 'b' : board.pieceBitboards[(int)Piece.BlackBishops] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.BlackBishops;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.BlackBishops];
                     break;
                     
                     case 'B' : board.pieceBitboards[(int)Piece.WhiteBishops] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.WhiteBishops;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.WhiteBishops];
                     break;
 
                     case 'n' : board.pieceBitboards[(int)Piece.BlackKnights] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.BlackKnights;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.BlackKnights];
                     break;
                     
                     case 'N' : board.pieceBitboards[(int)Piece.WhiteKnights] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.WhiteKnights;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.WhiteKnights];
                     break;
 
                     case 'q' : board.pieceBitboards[(int)Piece.BlackQueens] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.BlackQueens;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.BlackQueens];
                     break;
                     
                     case 'Q' : board.pieceBitboards[(int)Piece.WhiteQueens] |= 1UL << square;
                     board.pieceOnSquare[square] = (int)Piece.WhiteQueens;
+                    board.phaseScore += PiecePhaseWeights[(int)Piece.WhiteQueens];
                     break;
 
                     case 'k' : board.pieceBitboards[(int)Piece.BlackKing] |= 1UL << square;

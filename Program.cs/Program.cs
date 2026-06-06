@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using static Board;
+using System.IO.Pipelines;
 
 class Program
 {
@@ -24,36 +25,65 @@ class Program
         // fen3 - scillian defense
         // fen13 - endgame (mine)
 
-        string fen = TestPositions.perft2;
+        string fen = TestPositions.fen0;
+        // string fen1 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
         
         //"8/8/2K5/7q/1k6/8/8/6r1 b - - 0 1"
         FenUtility.LoadFromFen(fen, board);
-        // Console.WriteLine(evaluation.EvaluatePosition(board));
-        // Console.WriteLine(BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteBishops]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackBishops]));
+        Console.WriteLine(evaluation.EvaluatePosition(board));
 
-        int infinity = 9999999;
-        int searchDepth = 5;
+        Move move1 = new Move(12,20);
+        board.MakeMove(move1);
+        BoardPrinter.PrintBitboard(board);
+        Console.WriteLine($"Evaluation after move 1 : {evaluation.EvaluatePosition(board)}");
 
-        Stopwatch stopwatch = Stopwatch.StartNew();
+        Move move2 = new Move(57,42);
+        board.MakeMove(move2);
+        BoardPrinter.PrintBitboard(board);
+        Console.WriteLine($"Evaluation after move 2 : {evaluation.EvaluatePosition(board)}");
+        
+        Move move3 = new Move(11,19);
+        board.MakeMove(move3);
+        BoardPrinter.PrintBitboard(board);
+        Console.WriteLine($"Evaluation after move 3 : {evaluation.EvaluatePosition(board)}");
         
 
-        for (int i = 0; i < 100; i++)
-        {
-            search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity);
-        }
+        // int infinity = 9999999;
+        // int searchDepth = 6;
 
-        stopwatch.Stop();
+        // Stopwatch stopwatch = Stopwatch.StartNew();
+        
 
-        double averageMilliseconds = stopwatch.Elapsed.TotalMilliseconds / 100.0;
+        // for (int i = 0; i < 100; i++)
+        // {
+        //     search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity);
+        // }
+
+        // // long nodes = PerftTool.Perft(board, moveGenerator, searchDepth);
+
+        // stopwatch.Stop();
+
+        // double averageMilliseconds = stopwatch.Elapsed.TotalMilliseconds / 100.0;
         
         // Console.WriteLine($"Leaf count =  {search.leafCount} \nNode count = {search.nodeCount}");
         
-        double nps = (search.nodeCount * 100) / stopwatch.Elapsed.TotalSeconds;
-        Console.WriteLine($"Average Time: {averageMilliseconds:F2} ms");
-        Console.WriteLine($"NPS: {nps:N0}");
+        // double nps = (search.nodeCount * 100) / stopwatch.Elapsed.TotalSeconds;
+        
+        // Console.WriteLine($"Average Time: {stopwatch.Elapsed.TotalMicroseconds:F2} ms");
+        // Console.WriteLine($"NPS: {nps:N0}");
         
         // Console.WriteLine($"Time: {averageMilliseconds:F2} ms");
         // Console.WriteLine($"NPS: {nps:N0}");
+
+        // Move move = new Move(12,20,0);
+        // board.MakeMove(move);
+
+        // Move move = new Move (42, 56);
+        // board.MakeMove(move);
+        // Console.WriteLine(board.phaseScore);
+        // board.UnmakeMove(move);
+        // Console.WriteLine(board.phaseScore);
+
         
         
     

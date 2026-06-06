@@ -198,3 +198,7 @@ private void HandlePromotion(Move move, int pawnIndex, ulong startMask, ulong ta
 
     TODO - Optimize move generation for pinned pieces, checks etc. Will do this later.
     TODO - instead of repeatedly calling PopCount during evaluation, maintain incremental material counts during make/unmake move
+    TODO - Implement check and positional moves in move ordering.
+    TODO - Major pieces increase in value and minor pieces decrease in value as game proceeds
+    TODO - King moves are discouraged in the opening and encouraged in the middlegame (likely handled by piece square table)
+    TODO - Fine tune slider piece evaluation for example open file bonus, semi open file bonus, long diagonal bonus, connected rooks, 7th haven.

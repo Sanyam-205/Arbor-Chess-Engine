@@ -21,7 +21,7 @@ public class Board
 
 
     public BoardState[] history = new BoardState[1024];
-    public int plyCount = 0;
+    public int plyCount = 0, phaseScore;
 
     //combined 64 bit integers for black and white pieces
     public ulong AllPieces;
@@ -66,6 +66,11 @@ public class Board
     {
         WhiteRooks, WhiteKnights, WhiteBishops, WhiteQueens, WhiteKing, WhitePawns, BlackRooks, BlackKnights, BlackBishops, BlackQueens, BlackKing, BlackPawns
     }
+
+    public static readonly int[] PiecePhaseWeights = 
+    {
+        2,1,1,4,0,0,2,1,1,4,0,0
+    };
 
     /*
         0   WhiteRooks, 
@@ -115,6 +120,7 @@ public class Board
         //Capture
         if(capturedPiece != -1) 
         {
+            phaseScore -= PiecePhaseWeights[capturedPiece];
             AllPieces &= ~targetMask; // Erase the piece from global occupancy
 
             /*
@@ -183,13 +189,16 @@ public class Board
             int finalPieceIndex = baseIndex + (colorToMove * 6);
             pieceBitboards[finalPieceIndex] |= targetMask1;
 
+            //update phase score
+            phaseScore += PiecePhaseWeights[finalPieceIndex];
+
             // 3. Update global occupancies
             AllPieces ^= moveMask;
             colorBitboard[colorToMove] ^= moveMask1;
 
             // 4. Update the pieceOnSquare array correctly
             pieceOnSquare[move.StartSquare] = -1; // Clear the start square
-            pieceOnSquare[move.TargetSquare] = finalPieceIndex; // Set the Queen
+            pieceOnSquare[move.TargetSquare] = finalPieceIndex; 
         
         
         }
@@ -288,6 +297,9 @@ public class Board
         {
             if (move.Flag >= (int)Move.MoveFlag.promoteToQueen && move.Flag <= (int)Move.MoveFlag.promoteToBishop) //promotion
             {
+                //update phase score
+                phaseScore -= PiecePhaseWeights[movingPiece]; //when a piece is promoted, we add to phase score. In unmake move, we subtract from phase score.
+                
                 //Remove the piece from the move.TargetSquare
                 pieceBitboards[movingPiece] ^= targetMask;
 
@@ -346,6 +358,7 @@ public class Board
         //Put the piece back
         if(prevCapturedPiece != -1)
         {
+            phaseScore += PiecePhaseWeights[prevCapturedPiece];
             pieceBitboards[prevCapturedPiece] |= targetMask;
             AllPieces ^= targetMask;
             colorBitboard[colorToMove ^ 1] ^= targetMask;
@@ -544,11 +557,7 @@ public class Board
         return BitOperations.TrailingZeroCount(kingBoard);
     }
 
-    public int GetPieceType(int square, Board board)
-    {
-        // does square 
-        return 0;
-    }
+    
 
 
 }
