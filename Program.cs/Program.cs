@@ -18,6 +18,20 @@ class Program
         Search search = new Search();
         Evaluation evaluation = new Evaluation();
 
+       
+        UCIUtility.Loop(board, moveGenerator, evaluation, search);
+
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
         // perft6 - kiwipete
         // fen0 - starting position
         // fen1 - middlegame (mine possibly)
@@ -25,15 +39,15 @@ class Program
         // fen3 - scillian defense
         // fen13 - endgame (mine)
 
-        string fen = TestPositions.fen0;
-        string fen1 = "1k6/3Q4/7R/8/4P3/8/8/K7 w - - 1 2";
-        string fen2 = "5Q2/4R1pk/4B2p/1p1p4/1P6/2P2P2/1P3P1P/6K1 w - - 1 29";
+        // string fen = TestPositions.fen0;
+        // string fen1 = "1k6/3Q4/7R/8/4P3/8/8/K7 w - - 1 2";
+        // string fen2 = "5Q2/4R1pk/4B2p/1p1p4/1P6/2P2P2/1P3P1P/6K1 w - - 1 29";
         
         //"8/8/2K5/7q/1k6/8/8/6r1 b - - 0 1"
-        FenUtility.LoadFromFen(fen1, board);
+        // FenUtility.LoadFromFen(fen1, board);
         // Console.WriteLine(evaluation.EvaluatePosition(board));
 
-        // Move move1 = new Move(12,20);
+        /*// Move move1 = new Move(12,20);
         // board.MakeMove(move1);
         // BoardPrinter.PrintBitboard(board);
         // Console.WriteLine($"Evaluation after move 1 : {evaluation.EvaluatePosition(board)}");
@@ -46,24 +60,24 @@ class Program
         // Move move3 = new Move(11,19);
         // board.MakeMove(move3);
         // BoardPrinter.PrintBitboard(board);
-        // Console.WriteLine($"Evaluation after move 3 : {evaluation.EvaluatePosition(board)}");
+        // Console.WriteLine($"Evaluation after move 3 : {evaluation.EvaluatePosition(board)}");*/
         
-        BoardPrinter.PrintBitboard(board);
+        /*BoardPrinter.PrintBitboard(board);
         Console.WriteLine(board.colorToMove);
 
         int infinity = 9999999;
         
         int searchDepth = 6;
 
-        Stopwatch stopwatch = new Stopwatch();
+        Stopwatch stopwatch = new Stopwatch();*/
 
         // stopwatch.Start();
         // int bestEval = search.NegaMax(board, moveGenerator, evaluation, 1, -infinity, infinity, 0);
         // stopwatch.Stop();
         // Console.WriteLine($"Time taken  : {stopwatch.Elapsed.TotalMilliseconds:F2} ms");
         // Console.WriteLine($"Total nodes = {search.nodeCount}");
-        Console.WriteLine(search.NegaMax(board, moveGenerator, evaluation, 1, -infinity, infinity, 0));
-        search.PrintPrincipalVariation();
+        // Console.WriteLine(search.NegaMax(board, moveGenerator, evaluation, 1, -infinity, infinity, 0));
+        // search.PrintPrincipalVariation();
         
         
         // Move move = new Move(12,28,0);
@@ -200,7 +214,7 @@ class Program
 
 
 
-        Console.ReadLine();
+        // Console.ReadLine();
 
 
 

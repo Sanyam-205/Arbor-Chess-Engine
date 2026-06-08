@@ -177,11 +177,6 @@ public class Search
             }
         }
 
-        // if (ply == 0)
-        // {
-        //     Console.WriteLine($"[DEBUG] Exiting Root: PV Length is {pvLength[0]}, Best move in array is {pvTable[0,0].StartSquare}, {pvTable[0,0].TargetSquare}");
-        // }
-
         return alpha;
     }
 
@@ -508,7 +503,29 @@ public class Search
         return 0;
     }
 
-    
+    public Move GetBestMove(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth)
+    {
+        // 1. Reset any global search statistics
+        nodeCount = 0;
+        leafCount = 0;
+
+        // 2. Set initial Alpha and Beta bounds to +/- infinity
+        // Make sure these match or exceed the highest possible scores (like your +/- 100000 for mate)
+        int infinity = 500000; 
+        int alpha = -infinity;
+        int beta = infinity;
+
+        // 3. Initiate the search from the root (ply = 0)
+        int score = NegaMax(board, moveGenerator, evaluation, depth, alpha, beta, 0);
+
+        // 4. Retrieve the best move from the root of the PV table
+        Move bestMove = pvTable[0, 0];
+
+        // Optional: Print info to the UCI GUI 
+        // Console.WriteLine($"info depth {depth} score cp {score} nodes {nodeCount}");
+
+        return bestMove;
+    }
 
 
     /*

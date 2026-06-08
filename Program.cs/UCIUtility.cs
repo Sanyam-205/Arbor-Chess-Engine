@@ -3,7 +3,7 @@ using System.Linq;
 public static class UCIUtility
 {
     
-    public static void Loop(Board board, MoveGenerator moveGenerator)
+    public static void Loop(Board board, MoveGenerator moveGenerator, Evaluation evaluation, Search search)
     {
         // Console.WriteLine("Custom Engine UCI initialized.")
 
@@ -21,7 +21,7 @@ public static class UCIUtility
             switch (command)
             {
                 case "uci":
-                    Console.WriteLine("id name BlowFISH 1.0");
+                    Console.WriteLine("id name ARBOR 1.0");
                     Console.WriteLine("id author Sanyam");
                     // TODO: Print available options here (e.g., Hash size)
                     Console.WriteLine("uciok");
@@ -41,7 +41,8 @@ public static class UCIUtility
                     break;
 
                 case "go":
-                    ParseGo(input, board, moveGenerator);
+                    //AbortSearch = false; // Reset the flag before starting a new search
+                    ParseGo(input, board, moveGenerator, evaluation, search);
                     break;
 
                 case "perft":
@@ -52,7 +53,7 @@ public static class UCIUtility
                     break;
 
                 case "stop":
-                    // TODO: Set a flag to interrupt your search immediately
+                    //AbortSearch = true; //TODO: Complete the stop flag integration
                     break;
 
                 case "quit":
@@ -163,37 +164,47 @@ public static class UCIUtility
         }
     }
 
-    private static void ParseGo(string input, Board board, MoveGenerator moveGenerator)
+    private static void ParseGo(string input, Board board, MoveGenerator moveGenerator, Evaluation evaluation, Search search)
     {
-        // The GUI can send many parameters: "go depth 5", "go wtime 30000 btime 30000", etc.
         string[] tokens = input.Split(' ');
         
-        int depth = 5; // Default depth if none is provided
-        
+        int depth = 5; // Default depth
+        int wtime = 0, btime = 0, winc = 0, binc = 0;
+        int movetime = 0;
+
+        // Parse common GUI parameters
         for (int i = 0; i < tokens.Length; i++)
         {
             if (tokens[i] == "perft" && i + 1 < tokens.Length)
             {
-                int.TryParse(tokens[i + 1], out depth);
-                PerftTool.PerftDivide(board, moveGenerator, depth);
+                if (int.TryParse(tokens[i + 1], out int perftDepth))
+                {
+                    PerftTool.PerftDivide(board, moveGenerator, perftDepth);
+                }
                 return;
             }
             if (tokens[i] == "depth" && i + 1 < tokens.Length)
-            {
                 int.TryParse(tokens[i + 1], out depth);
-            }
+            if (tokens[i] == "wtime" && i + 1 < tokens.Length)
+                int.TryParse(tokens[i + 1], out wtime);
+            if (tokens[i] == "btime" && i + 1 < tokens.Length)
+                int.TryParse(tokens[i + 1], out btime);
+            if (tokens[i] == "winc" && i + 1 < tokens.Length)
+                int.TryParse(tokens[i + 1], out winc);
+            if (tokens[i] == "binc" && i + 1 < tokens.Length)
+                int.TryParse(tokens[i + 1], out binc);
+            if (tokens[i] == "movetime" && i + 1 < tokens.Length)
+                int.TryParse(tokens[i + 1], out movetime);
         }
 
-        // TODO: Call your actual search function here
-        // Move bestMove = Search.GetBestMove(board, moveGenerator, depth);
-        // Console.WriteLine($"bestmove {BoardUtils.MoveToUci(bestMove)}");
+        // TODO: Pass time parameters to your search if you implement time management.
+        // For a bare-bones engine, you can just rely on fixed depth to start.
 
-        // For now, to test that UCI is working, we can just run perft:
-        Console.WriteLine($"info string Running perft {depth} from UCI...");
-        PerftTool.PerftDivide(board, moveGenerator, depth);
-        // Placeholder for actual search. 
-        // If 'go depth X' is called, it should ideally run Minimax/Negamax, not Perft.
-        // Console.WriteLine($"info string Search not yet implemented. Depth requested: {depth}");
+        // 1. Call your actual search function
+        Move bestMove = search.GetBestMove(board, moveGenerator, evaluation, depth); 
+
+        // 2. The critical step: tell the GUI what move you chose
+        Console.WriteLine($"bestmove {BoardUtility.MoveToUci(bestMove)}");
     }
 
 
