@@ -26,10 +26,11 @@ class Program
         // fen13 - endgame (mine)
 
         string fen = TestPositions.fen0;
-        // string fen1 = "1R2r2k/2P3p1/7p/1p1p4/1P6/5P2/1P3PKP/8 b - - 0 26";
+        string fen1 = "1k6/3Q4/7R/8/4P3/8/8/K7 w - - 1 2";
+        string fen2 = "5Q2/4R1pk/4B2p/1p1p4/1P6/2P2P2/1P3P1P/6K1 w - - 1 29";
         
         //"8/8/2K5/7q/1k6/8/8/6r1 b - - 0 1"
-        FenUtility.LoadFromFen(fen, board);
+        FenUtility.LoadFromFen(fen1, board);
         // Console.WriteLine(evaluation.EvaluatePosition(board));
 
         // Move move1 = new Move(12,20);
@@ -51,16 +52,17 @@ class Program
         Console.WriteLine(board.colorToMove);
 
         int infinity = 9999999;
+        
         int searchDepth = 6;
 
         Stopwatch stopwatch = new Stopwatch();
 
-        stopwatch.Start();
-        int bestEval = search.NegaMax(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
-        stopwatch.Stop();
-        Console.WriteLine($"Time taken  : {stopwatch.Elapsed.TotalMilliseconds:F2} ms");
-        Console.WriteLine($"Total nodes = {search.nodeCount}");
-        Console.WriteLine(bestEval);
+        // stopwatch.Start();
+        // int bestEval = search.NegaMax(board, moveGenerator, evaluation, 1, -infinity, infinity, 0);
+        // stopwatch.Stop();
+        // Console.WriteLine($"Time taken  : {stopwatch.Elapsed.TotalMilliseconds:F2} ms");
+        // Console.WriteLine($"Total nodes = {search.nodeCount}");
+        Console.WriteLine(search.NegaMax(board, moveGenerator, evaluation, 1, -infinity, infinity, 0));
         search.PrintPrincipalVariation();
         
         

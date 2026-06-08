@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using static Board;
@@ -61,7 +62,7 @@ public class Search
             leafCount++;
             // pvLength[ply] = 0; //signifies the search function finished searching
             // return evaluation.EvaluatePosition(board);
-            return Quiescence(board, moveGenerator, evaluation, alpha, beta);
+            return Quiescence(board, moveGenerator, evaluation, alpha, beta, ply);
         }
         //Populate moveList with pseudolegal moves
         Move[] moveList = new Move[256];
@@ -168,7 +169,7 @@ public class Search
 
             if((currentKingSquare != -1) && board.IsSquareAttacked(currentKingSquare, colorToMove))
             {
-                return -9999; //checkmate
+                return -100000; //checkmate
             }
             else
             {
@@ -187,26 +188,167 @@ public class Search
 
 
     //Quiescence function
-    public int Quiescence(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int alpha, int beta)
+    // public int quiescence(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int alpha, int beta, int ply)
+    // {
+    //     pvLength[ply] = 0;
+
+    //     int kingSquare1 = board.GetKingSquare(board.colorToMove);
+
+    //     bool isCheck = board.IsSquareAttacked(kingSquare1, board.colorToMove);
+
+    //     if(isCheck)
+    //     {
+    //         //do something
+    //         // if the king is in check we need to discard the standPat score. If a king in check should be treated as a noisy move even though it is quiet. The problem without thst is if a king is in check, quiescence only generates noisy moves (captures, promotions) and it completely disregards checks.
+
+    //         Move[] moveList = new Move[256];
+    //         int moveCount = 0;
+    //         moveGenerator.GenerateAllPseudoLegalMoves(board, moveList, ref moveCount);
+    //         int legalMoves = 0;
+
+    //         for(int i = 0; i<moveCount; i++)
+    //         {
+    //             Move move = moveList[i];
+
+    //             board.MakeMove(move);
+                
+    //             if((kingSquare1!= -1) && board.IsSquareAttacked(kingSquare1, board.colorToMove ^ 1))
+    //             {
+    //                 board.UnmakeMove(move);
+    //                 continue;
+    //             }
+    //             legalMoves++;
+    //         }
+
+    //         if(legalMoves == 0) return -100000;
+    //     }
+
+
+
+    //     else //king is not in check.
+    //     {
+    //         int standPat = evaluation.EvaluatePosition(board);
+    //         if(standPat >= beta) return beta;
+
+    //         //alpha = max of alpha, standPat
+    //         alpha = (alpha > standPat) ? alpha : standPat;
+
+    //         Move[] moveList = new Move[256];
+    //         int moveCount = 0;
+    //         moveGenerator.GenerateAllPseudoLegalCaptures(board, moveList, ref moveCount);
+
+    //         int legalMovesPlayed = 0;
+
+    //         int[] moveScore = new int[moveCount];
+    //         for(int i = 0; i<moveCount; i++)
+    //         {
+    //             Move newMove = moveList[i];
+    //             moveScore[i] = ScoreMove(newMove, board);
+    //         }
+
+    //         for(int i = 0; i<moveCount; i++)
+    //         {
+    //             int bestMoveIndex = i;
+
+    //             for(int j = i; j < moveCount; j++)
+    //             {
+    //                 if(moveScore[j] > moveScore[bestMoveIndex])
+    //                 {
+    //                     bestMoveIndex = j;
+    //                 }
+    //             }
+
+    //             Move tempMove = moveList[i];
+    //             moveList[i] = moveList[bestMoveIndex];
+    //             moveList[bestMoveIndex] = tempMove;
+
+    //             int temp = moveScore[i];
+    //             moveScore[i] = moveScore[bestMoveIndex];
+    //             moveScore[bestMoveIndex] = temp;
+
+    //             Move move = moveList[i];
+    //             board.MakeMove(move);
+    //             int colorThatJustMoved = board.colorToMove ^ 1;
+    //             int kingSquare = board.GetKingSquare(colorThatJustMoved);
+
+    //             if((kingSquare!= -1) && board.IsSquareAttacked(kingSquare, colorThatJustMoved))
+    //             {
+    //                 board.UnmakeMove(move);
+    //                 continue;
+    //             }
+
+    //             board.UnmakeMove(move);
+    //             legalMovesPlayed++;
+
+    //             int score = -quiescence(board, moveGenerator, evaluation, -beta, -alpha, ply+1);
+            
+    //             board.UnmakeMove(move);
+
+    //             if(score>=beta)
+    //             {
+    //                 return score; //cutoff
+    //             }
+
+    //             if(score > alpha)
+    //             {
+    //                 alpha = score;
+
+    //                 pvTable[ply, 0] = move;
+
+    //                  // 2. Copy the sequence of moves from the deeper ply
+    //                 for (int j = 0; j < pvLength[ply + 1]; j++)
+    //                 {
+    //                     pvTable[ply, j + 1] = pvTable[ply + 1, j];
+    //                 }
+
+    //                 // 3. Update the length of the sequence for this ply
+    //                 pvLength[ply] = pvLength[ply + 1] + 1;
+
+
+    //             }
+    //         }
+    //     }
+
+    //     return alpha;
+    // }
+
+
+    public int Quiescence (Board board, MoveGenerator moveGenerator, Evaluation evaluation, int alpha, int beta, int ply)
     {
-        int standPat = evaluation.EvaluatePosition(board);
-        if(standPat >= beta) return beta;
+        pvLength[ply] = 0;
+        
+        int currentKingSquare = board.GetKingSquare(board.colorToMove);
+        bool inCheck = board.IsSquareAttacked(currentKingSquare, board.colorToMove);
 
-        //alpha = max of alpha, standPat
-        alpha = (alpha > standPat) ? alpha : standPat;
+        // Console.WriteLine($"Quiescence called! Side to move: {board.colorToMove}. In Check? {inCheck}");
 
+        // if(inCheck) Console.WriteLine("in check");
         Move[] moveList = new Move[256];
         int moveCount = 0;
-        moveGenerator.GenerateAllPseudoLegalCaptures(board, moveList, ref moveCount);
+
+        if(inCheck)
+        {
+            moveGenerator.GenerateAllPseudoLegalMoves(board, moveList, ref moveCount);
+        }
+
+        else
+        {
+            int standPat = evaluation.EvaluatePosition(board);
+            if(standPat >= beta) return beta;
+            if(standPat > alpha) alpha = standPat;
+
+            moveGenerator.GenerateAllPseudoLegalCaptures(board, moveList, ref moveCount);
+        }
 
         int legalMovesPlayed = 0;
 
+        //Move ordering logic
         int[] moveScore = new int[moveCount];
         for(int i = 0; i<moveCount; i++)
         {
-            Move newMove = moveList[i];
-            moveScore[i] = ScoreMove(newMove, board);
+            moveScore[i] = ScoreMove(moveList[i], board); //assign scores to moves and store those in moveScore array
         }
+
 
         for(int i = 0; i<moveCount; i++)
         {
@@ -231,32 +373,82 @@ public class Search
             Move move = moveList[i];
             board.MakeMove(move);
             int colorThatJustMoved = board.colorToMove ^ 1;
-            int kingSquare = board.GetKingSquare(colorThatJustMoved);
+            int kingSquareAfterMove = board.GetKingSquare(colorThatJustMoved);
 
-            if((kingSquare!= -1) && board.IsSquareAttacked(kingSquare, colorThatJustMoved))
+            if ((kingSquareAfterMove != -1) && board.IsSquareAttacked(kingSquareAfterMove, colorThatJustMoved))
             {
                 board.UnmakeMove(move);
-                continue;
+                continue; //Move is illegal, skip that index and continue the for loop from next index (move)
             }
             legalMovesPlayed++;
 
-            int score = -Quiescence(board, moveGenerator, evaluation, -beta, -alpha);
-        
+            int score = -Quiescence(board, moveGenerator, evaluation, -beta, -alpha, ply + 1);
+
             board.UnmakeMove(move);
 
-            if(score>=beta)
+            //alpha beta pruning
+            if(score >= beta)
             {
-                return score; //cutoff
+                return score; //beta cutoff
             }
 
             if(score > alpha)
             {
-                alpha = score;
+                alpha = score; //found a better guaranteed path/move. Update alpha
+            
+                // pvTable[ply, ply] = move;
+                // // 2. Loop through and copy the child node's PV into our current PV
+                // for (int nextPly = ply + 1; nextPly < pvLength[ply + 1]; nextPly++)
+                // {
+                //     pvTable[ply, nextPly] = pvTable[ply + 1, nextPly];
+                // }
+                
+                // // 3. Update the length of the PV for the current ply
+                // pvLength[ply] = pvLength[ply + 1];
+
+                pvTable[ply, 0] = move;
+
+                // 2. Copy the sequence of moves from the deeper ply
+                for (int j = 0; j < pvLength[ply + 1]; j++)
+                {
+                    pvTable[ply, j + 1] = pvTable[ply + 1, j];
+                }
+
+                // 3. Update the length of the sequence for this ply
+                pvLength[ply] = pvLength[ply + 1] + 1;
+
+
             }
         }
 
+        // if (board.colorToMove == 1) 
+        // {
+        //     if (inCheck && legalMovesPlayed == 0) 
+        //     {
+        //         Console.WriteLine("MATE CAUGHT: But I missed the return statement!");
+        //     } 
+        //     else if (inCheck && legalMovesPlayed > 0) 
+        //     {
+        //         Console.WriteLine($"GHOST EVASION: I am in check, but I think I found {legalMovesPlayed} legal moves!");
+        //     } 
+        //     else if (!inCheck) 
+        //     {
+        //         Console.WriteLine("BLIND: I am supposed to be in check from RxP, but inCheck is FALSE!");
+        //     }
+        // }
+
+        if(inCheck && legalMovesPlayed == 0)
+        {
+            return -100000;
+            
+        }
+
+
         return alpha;
     }
+
+
+
 
 
     //Helper function
