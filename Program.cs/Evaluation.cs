@@ -9,15 +9,18 @@ public class Evaluation
     public int EvaluatePosition(Board board)
     {
         
-        int whiteMiddlegameScore = 0;
-        int whiteEndgameSCore = 0;
-        int blackMiddlegameScore = 0;
-        int blackEndgameScore = 0;
-        // 340 * (BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteBishops]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackBishops])) + 
+        // int score = 340 * (BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteBishops]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackBishops])) + 
         // 320 * (BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteKnights]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackKnights])) + 
         // 900 * (BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteQueens]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackQueens])) + 
         // 500 * (BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhiteRooks]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackRooks])) + 
         // 100 * (BitOperations.PopCount(board.pieceBitboards[(int)Piece.WhitePawns]) - BitOperations.PopCount(board.pieceBitboards[(int)Piece.BlackPawns]));
+
+#region
+     
+        int whiteMiddlegameScore = 0;
+        int whiteEndgameSCore = 0;
+        int blackMiddlegameScore = 0;
+        int blackEndgameScore = 0;
 
         ulong whiteKnights = board.pieceBitboards[(int)Piece.WhiteKnights];
         while(whiteKnights!=0)
@@ -178,7 +181,8 @@ public class Evaluation
 
         int score = ((netMiddlegame * safePhase) + (netEndgame * (24 - safePhase))) / 24; 
 
-
+#endregion
+ 
         score *= ColorMultiplier[board.colorToMove];
 
 

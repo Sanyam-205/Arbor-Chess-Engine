@@ -493,11 +493,21 @@ public class Board
     {
         //if we have to check for white king is under attack, we use the whitePawnAttack table as pawn mask. 
         // We do so because if the white king is on square 20, it can be attacked by a black pawn on square 27 or 29. Since a white pawn on square 20 also attacks square 27 and 29, we reverse it's logic. 
-        // If whitePawnAttack table for the square coincides with black pawn on that square, the king on that square will be attacked.
+        // If whitePawnAttack table for the square coincides with black king on that square, the king on that square will be attacked.
+if(square == -1)
+{
+    Console.WriteLine("BAD SQUARE INDEX");
+    Console.WriteLine($"FATAL: Invalid square index {square} passed to IsSquareAttacked");
+
+    Console.Out.Flush();
+    Environment.Exit(1);   
+}
+
 
         int enemyColor = defendingColor ^ 1;
         ulong enemyPawnBitboard = pieceBitboards[(int)Piece.WhitePawns + (enemyColor * 6)]; 
         // ulong pawnMask = AttackTables.pawnAttacks[defendingColor] [square];
+
         ulong pawnMask = (defendingColor == 0)? AttackTables.whitePawnAttacks[square] : AttackTables.blackPawnAttacks[square];        
 
 
@@ -578,17 +588,16 @@ public class Board
     }
 
 
-    public int GetKingSquare(int color)
+    public int GetKingSquare(int colorToMove)
     {
-        // Assuming you have separate bitboards for each king
-        ulong kingBoard = pieceBitboards[(int)Piece.WhiteKing + (color * 6)];
-        if (kingBoard == 0)
+        ulong kingBitBoard = pieceBitboards[(int)Piece.WhiteKing + (colorToMove * 6)];
+        if (kingBitBoard == 0)
         {
             // This can happen in analysis if a pseudo-legal move captures the king.
             // A king bitboard should never be zero in a legal, ongoing game.
             return -1;
         }
-        return BitOperations.TrailingZeroCount(kingBoard);
+        return BitOperations.TrailingZeroCount(kingBitBoard);
     }
 
     

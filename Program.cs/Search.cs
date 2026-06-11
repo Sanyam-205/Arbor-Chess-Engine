@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Net;
 using System.Numerics;
 using System.Text.RegularExpressions;
@@ -6,7 +7,7 @@ using static Board;
 
 public class Search
 {
-    public int nodeCount, leafCount;
+    public long nodeCount, leafCount, qNodes;
     //alpha is the highest score the AI is guaranteed to achieve. Good for AI
     //beta is the lowest score the opponent can have. Good for human
     /*
@@ -25,8 +26,9 @@ public class Search
     
     */
 
-    Move[,] pvTable = new Move[64,64]; //fixed 2d array to store the move and depth score.
-    int[] pvLength = new int[64]; //need to track how long the move sequence is at each depth so it can be copied downward at the next depth level
+    const int MaxPly = 256;
+    Move[,] pvTable = new Move[MaxPly, MaxPly]; //fixed 2d array to store the move and depth score.
+    int[] pvLength = new int[MaxPly]; //need to track how long the move sequence is at each depth so it can be copied downward at the next depth level
 
     /* A principal variation table is used to store the sequence of moves that will result in the best move for that depth. At depth 6, the alpha value (score) will show the evaluation after the board has reached that particular stage. The root node is the final move at that particular depth. We need to store the sequence of moves. Here's how we do it.
     A 2d array in which, one element referes to the depth value as depth decreases in each recursive call of the loop and another sotring the best move found.
@@ -48,13 +50,25 @@ public class Search
     {
         nodeCount = 0; // Clear the board for the new search
         leafCount = 0;
+        qNodes = 0;
         return NegaMax(board, moveGenerator, evaluation, depth, alpha, beta, ply);
     }
 
+Move negaMaxBestMove;
+
+
+
+
     public int NegaMax(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta, int ply) 
     {
-        nodeCount++;//debug code
-        
+        nodeCount++;
+
+        if (ply >= MaxPly)
+        {
+            //THE PLY COUNT HAS EXCEEDED MAX SET LIMIT. DO SOMETHING IDK
+            return evaluation.EvaluatePosition(board);
+        }
+
         pvLength[ply] = 0; //set it to 0 for each recursive call.
 
         if (depth == 0) 
@@ -62,7 +76,6 @@ public class Search
             leafCount++;
             // pvLength[ply] = 0; //signifies the search function finished searching
             // return evaluation.EvaluatePosition(board);
-            // Console.WriteLine($"NegaMax just played: {pvTable[0,0].StartSquare} -> {pvTable[0,0].TargetSquare}");
             return Quiescence(board, moveGenerator, evaluation, alpha, beta, ply);
         }
         //Populate moveList with pseudolegal moves
@@ -74,6 +87,7 @@ public class Search
 
 
         //Populate scores for each move in the moveList array in the same order.
+
         int[] moveScore = new int[moveCount];
         for(int i = 0; i<moveCount; i++)
         {
@@ -87,6 +101,7 @@ public class Search
         //run moves in moveList through the legality check
         for (int i = 0; i < moveCount; i++)
         {
+#region move ordering
             //Selection sort           
             
             int bestMoveIndex = i;
@@ -109,18 +124,37 @@ public class Search
             moveScore[i] = moveScore[bestMoveIndex];
             moveScore[bestMoveIndex] = temp;
         
-
+#endregion
             
             // continuation of search
             Move move = moveList[i];
 
 
 #region debug
+//
+//     int startSq = move.StartSquare;
+//     int targetSq = move.TargetSquare;
+//     int originalStartPiece = board.pieceOnSquare[startSq];
+//     int originalTargetPiece = board.pieceOnSquare[targetSq];
 
-    // int startSq = move.StartSquare;
-    // int targetSq = move.TargetSquare;
-    // int originalStartPiece = board.pieceOnSquare[startSq];
-    // int originalTargetPiece = board.pieceOnSquare[targetSq];
+// if((startSq == 0)  && (targetSq == 0))
+// {
+//     Console.WriteLine("=================================");
+//     Console.WriteLine("BAD MOVE LIST");
+//     Console.WriteLine("=================================");
+
+//     // Console.WriteLine($"Previous move - {moveList[i-1].StartSquare}, {moveList[i-1].TargetSquare}");
+//     Console.WriteLine($"Current move - {moveList[i].StartSquare}, {moveList[i].TargetSquare}");
+//     Console.WriteLine($"Next move - {moveList[i+1].StartSquare}, {moveList[i+1].TargetSquare}");
+
+//     Console.WriteLine("=================================");
+//     Console.Out.Flush();
+//     Environment.Exit(1);
+
+// }
+
+
+
 // if (board.pieceOnSquare[move.StartSquare] == -1)
 // {
 //     Console.WriteLine("=================================");
@@ -198,7 +232,7 @@ public class Search
                 // } 
 
                 pvTable[ply, 0] = move;
-
+                negaMaxBestMove = move;
                 // 2. Copy the sequence of moves from the deeper ply
                 for (int j = 0; j < pvLength[ply + 1]; j++)
                 {
@@ -361,9 +395,26 @@ public class Search
 
     public int Quiescence (Board board, MoveGenerator moveGenerator, Evaluation evaluation, int alpha, int beta, int ply)
     {
+        qNodes++;
+        
+        
+        if (ply >= MaxPly)
+        {
+            //THE PLY COUNT HAS EXCEEDED MAX SET LIMIT. DO SOMETHING IDK
+            return evaluation.EvaluatePosition(board);
+        }
+
         pvLength[ply] = 0;
         
         int currentKingSquare = board.GetKingSquare(board.colorToMove);
+
+        // If the King is missing (captured in the previous ply via pseudo-legal generation),
+        // immediately evaluate this branch as a loss (checkmate).
+        if (currentKingSquare == -1)
+        {
+            return -100000;
+        }
+
         bool inCheck = board.IsSquareAttacked(currentKingSquare, board.colorToMove);
 
         // Console.WriteLine($"Quiescence called! Side to move: {board.colorToMove}. In Check? {inCheck}");

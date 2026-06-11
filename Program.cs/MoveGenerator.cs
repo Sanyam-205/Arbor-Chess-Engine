@@ -247,8 +247,10 @@ public class MoveGenerator
             ulong blackKingSidePath = (1UL<< 62) | (1UL << 61);
             ulong blackQueenSidePath = (1UL<< 59) | (1UL << 58) | (1UL << 57);
 
-            if(board.colorToMove == 0)
-            {
+            if (board.colorToMove == 0)
+            {   
+                if (square == 4) // Ensure White King is actually on e1
+                {
                 if(((board.castlingRights & 1) != 0) && ((board.AllPieces & whiteKingSidePath) == 0) && !board.IsSquareAttacked(4, 0) && !board.IsSquareAttacked(5, 0) 
                 && !board.IsSquareAttacked(6, 0))
                 {
@@ -261,9 +263,12 @@ public class MoveGenerator
                     Move castleMove = new Move(4, 2, (int)Move.MoveFlag.whiteQueenSideCastle);
                     moveList[moveCount++] = castleMove;   
                 }
+                }
             }
             else
-            {
+            {   
+                if (square == 60) // Ensure Black King is actually on e8
+                {
                 if(((board.castlingRights & 4) != 0) && ((board.AllPieces & blackKingSidePath) == 0) && !board.IsSquareAttacked(60, 1) && !board.IsSquareAttacked(61, 1) 
                 && !board.IsSquareAttacked(62, 1))
                 {
@@ -276,7 +281,7 @@ public class MoveGenerator
                     Move castleMove = new Move(60, 58, (int)Move.MoveFlag.blackQueenSideCastle);
                     moveList[moveCount++] = castleMove;
                 }
-                
+                }
             }
 
             

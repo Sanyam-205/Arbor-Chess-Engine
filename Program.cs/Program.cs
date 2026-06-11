@@ -18,8 +18,77 @@ class Program
         Search search = new Search();
         Evaluation evaluation = new Evaluation();
 
-       
-        UCIUtility.Loop(board, moveGenerator, evaluation, search);
+
+        // perft6 - kiwipete
+        // fen0 - starting position
+        // fen1 - middlegame (mine possibly)
+        // perft2 - middlegame (perft)
+        // fen13 - endgame (mine)
+
+        
+        // string middleGame = TestPositions.fen1;
+        // string middleGame1 = TestPositions.perft2;
+        // string endGame = TestPositions.fen13;
+        // string kiwipete = TestPositions.perft6;
+        string test1 = "r3r1k1/1bpp1p1p/p2b1q2/1p1npnp1/B2PP3/1PN1B2N/P1PQ1PPP/R3R1K1 w - - 0 1";
+        string test2 = "r3r1k1/1bpp1p1p/p2b1qp1/1p1npn2/B2PP3/1PN1B2N/P1PQ1PPP/R3R1K1 b - - 0 1";
+        string fen = TestPositions.fen1;
+        FenUtility.LoadFromFen(fen, board);
+        //-360,410,664 nodes
+        //time - 3162286.97
+
+
+        int searchDepth = 6;
+        int infinity = 9999999;
+        Stopwatch stopwatch = new Stopwatch();
+
+        stopwatch.Start();
+        for(int i = 0; i<10; i++)
+        {
+            search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
+        }
+        search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
+        stopwatch.Stop();
+
+        double totalNodes = search.nodeCount + search.qNodes;
+        double avgLeaves = search.leafCount;
+        double avgTimeMs = stopwatch.Elapsed.TotalMilliseconds / 10.0;
+
+        double nps = totalNodes / (stopwatch.Elapsed.TotalSeconds/10);
+
+        Console.WriteLine($"Search nodes = {search.nodeCount:N0}");
+        Console.WriteLine($"Quiescence nodes = {search.qNodes:N0}");
+        Console.WriteLine($"Total nodes = {totalNodes:N0}");
+        // Console.WriteLine($"Average Leaves = {avgLeaves:N0}");
+        Console.WriteLine($"Average Time = {avgTimeMs:F2}");
+        Console.WriteLine($"NPS = {nps:N0}");
+        // // search.PrintPrincipalVariation();
+
+
+    // int kingSquare = board.GetKingSquare(board.colorToMove);
+    // Console.WriteLine(board.IsSquareAttacked(kingSquare, board.colorToMove));
+    // ulong pawnMask = (board.colorToMove == 0)? AttackTables.whitePawnAttacks[kingSquare] : AttackTables.blackPawnAttacks[kingSquare];        
+
+    // BoardUtility.PrintUlongBitboard(board.pieceBitboards[(int)Piece.WhitePawns]);
+    // int score = search.StartSearch(board, moveGenerator, evaluation, 1, -infinity, infinity, 0);
+    // Console.WriteLine(score);
+    
+    // int score = search.NegaMax(board, moveGenerator, evaluation, 1, -infinity, infinity, 0);
+    // Console.WriteLine(score);
+    // Move move1 = new Move(23,38);
+    // board.MakeMove(move1);
+    // BoardPrinter.PrintBitboard(board);
+    
+    
+    // Move move2 = search.GetBestMove(board, moveGenerator, evaluation, searchDepth); 
+    // Console.WriteLine(BoardUtility.MoveToUci(move2));
+
+
+
+
+
+#region UCI Testing
+        // UCIUtility.Loop(board, moveGenerator, evaluation, search);
 
        
        
@@ -59,7 +128,7 @@ class Program
         
         
         // Console.SetIn(new System.IO.StreamReader(Console.OpenStandardInput()));// Restore standard input for normal console usage
-       
+#endregion UCI Testing       
        
 
 //         FenUtility.LoadFromFen(TestPositions.fen0, board);
