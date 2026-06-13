@@ -384,6 +384,14 @@ class Program
                     TT Hits: 43520
                     TT Hit Rate: 17.43%
                     161k less nodes
+
+
+12,898
+56,503
+67,113
+ 6,986
+43,520
+        
         */
 
         /* Full score pruning 
@@ -404,14 +412,6 @@ class Program
                     TT Hits: 27993
                     TT Hit Rate: 12.11%
 
-            Middlegame1 -Search nodes = 113,142
-                    Quiescence nodes = 299,266
-                    Total nodes = 412,408
-                    TT Cutoffs: 4859
-                    TT Probes: 118001
-                    TT Hits: 5380
-                    TT Hit Rate: 4.56%
-
             Endgame -Search nodes = 471,783
                     Quiescence nodes = 1,325,398
                     Total nodes = 1,797,181
@@ -419,6 +419,14 @@ class Program
                     TT Probes: 502128
                     TT Hits: 39324
                     TT Hit Rate: 7.83%
+
+            Middlegame1 -Search nodes = 113,142
+                    Quiescence nodes = 299,266
+                    Total nodes = 412,408
+                    TT Cutoffs: 4859
+                    TT Probes: 118001
+                    TT Hits: 5380
+                    TT Hit Rate: 4.56%
 
             Kiwipete -Search nodes = 155,644
                     Quiescence nodes = 1,693,114
