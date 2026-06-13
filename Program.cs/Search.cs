@@ -874,8 +874,17 @@ public class Search
     {
         nodeCount = 0;
         leafCount = 0;
+        qNodes = 0;
+        ttProbes = 0;
+        ttHits = 0;
+        ttCutoffs = 0;
+        ttMoveFirst = 0;
+        ttMoveBest = 0;
+
         int infinity = 500000; 
         Move bestMove = new Move(0);
+        
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
         // Iterative Deepening Loop
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++)
@@ -889,16 +898,49 @@ public class Search
             // Grab the best move found at this depth
             bestMove = pvTable[0, 0];
 
-        string pvString = "";
-        for (int i = 0; i < pvLength[0]; i++)
-        {
-            pvString += BoardUtility.MoveToUci(pvTable[0, i]) + " ";
-        }
+            string pvString = "";
+            for (int i = 0; i < pvLength[0]; i++)
+            {
+                pvString += BoardUtility.MoveToUci(pvTable[0, i]) + " ";
+            }
 
-        //Print info to the UCI GUI 
-        Console.WriteLine($"info depth {depth} score cp {score} nodes {nodeCount + qNodes} pv {pvString.TrimEnd()}");
+            long totalNodes = nodeCount + qNodes;
+            long timeMs = Math.Max(1, sw.ElapsedMilliseconds); // Use Math.Max to avoid division by zero
+            long nps = (totalNodes * 1000) / timeMs;
 
+            double hitRate = ttProbes > 0 ? (100.0 * ttHits / ttProbes) : 0;
+
+            //Print info to the UCI GUI 
+            Console.WriteLine($"info string TT Probes: {ttProbes} | TT Hits: {ttHits} | TT Cutoffs: {ttCutoffs} | Hit Rate: {hitRate:F2}%");
+            // FIX: Print 'currentDepth' instead of 'depth' so the GUI sees the progression
+            Console.WriteLine($"info depth {currentDepth} score cp {score} time {timeMs} nodes {totalNodes} nps {nps} pv {pvString.TrimEnd()}");
+
+
+            //==============================Logging code===================================
+            //DISABLE IT IN BENCHMARK RUNS
+            if (currentDepth == 8)
+            {
+                string engineFolder = AppDomain.CurrentDomain.BaseDirectory;
+                
+                // 1. Get the unique Operating System Process ID for this running instance
+                int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+                
+                // 2. Embed the PID directly into the filename so instances never collide
+                string filePath = Path.Combine(engineFolder, $"node_counts_depth8_pid_{pid}.csv");
+
+                // 3. Standard write check
+                if (!System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.WriteAllText(filePath, "Depth,Nodes,TimeMs\n");
+                }
+
+                System.IO.File.AppendAllText(filePath, $"8,{totalNodes},{timeMs}\n");
+            }
+            //DISABLE IT IN BENCHMARK RUNS
+            //==============================Logging code===================================
             
+
+
         }
 
         return bestMove;
