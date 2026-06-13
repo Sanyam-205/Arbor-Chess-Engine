@@ -18,6 +18,11 @@ class Program
         Search search = new Search();
         Evaluation evaluation = new Evaluation();
 
+        UCIUtility.Loop(board, moveGenerator, evaluation, search);
+
+        // string errorFen1 = "rn1r2k1/pp3ppp/8/6q1/1B2n3/4P2P/P1P1B1KP/R3Q2R w - - 11 22";
+        // string errorFen2 = "Q1Q3Q1/8/8/2P5/8/1K1k3P/8/8 b - - 14 82";
+
 
         // perft6 - kiwipete
         // fen0 - starting position
@@ -25,15 +30,177 @@ class Program
         // perft2 - middlegame (perft)
         // fen13 - endgame (mine)
 
-        string fen = TestPositions.perft6;
-        FenUtility.LoadFromFen(fen, board);
+        // string fen = TestPositions.fen0;
+        // FenUtility.LoadFromFen(fen, board);
 
 
         
-        int searchDepth = 6;
-        int infinity = 9999999;
+        // int searchDepth = 6;
+        // int infinity = 9999999;
         
+        // int eval = search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
 
+        // Console.WriteLine($"Evaluation: {eval}");
+        // search.PrintPrincipalVariation();
+
+
+        /* can delete
+        // string[] crashTest =
+        // {
+        //   "position startpos",
+        //   "go depth 6",
+        //   "position startpos moves b1c3 d7d5",
+        //   "go depth 6",
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5",
+        //   "go depth 6",  
+        //   "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5",
+        //   "go depth 6",  
+        // };
+        */
+
+
+        // string[] crashTest =
+        // {
+        
+        // "position startpos",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8 b6a5 e4a8",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8 b6a5 e4a8 e2a6 e8e5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8 b6a5 e4a8 e2a6 e8e5 d1d5 e5d5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8 b6a5 e4a8 e2a6 e8e5 d1d5 e5d5 a3c5 d5c5",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8 b6a5 e4a8 e2a6 e8e5 d1d5 e5d5 a3c5 d5c5 a5a4 a8a6",
+        // "go depth 6",  
+        // "position startpos moves b1c3 d7d5 e2e3 e7e5 d2d4 e5e4 f1b5 c7c6 b5e2 d8g5 e1f1 g5d8 f2f3 g8f6 f3e4 d5e4 c1d2 f8d6 g1h3 c8h3 g2h3 e8g8 f1g1 c6c5 d4c5 d6c5 b2b4 c5b4 c3e4 f6e4 d2b4 d8g5 g1f1 f8d8 d1e1 g5f5 f1g2 f5g5 g2f3 g5f5 f3g2 f5g5 g2f3 b8c6 a1d1 g5f5 f3g2 f5g5 g2f3 a7a5 b4a3 g5f6 f3e4 d8e8 e4d3 a8d8 d3c4 b7b5 c4b5 f6f5 b5c6 f5e4 c6c7 d8c8 c7b6 c8b8 b6a5 e4a8 e2a6 e8e5 d1d5 e5d5 a3c5 d5c5 a5a4 a8a6 e1a5 c5a5",
+        // "go depth 6",  
+        // };
+
+
+        // string simulatedInput = string.Join(Environment.NewLine, crashTest);// Combine all commands into a single block of text separated by newlines
+
+        
+        
+        // using (System.IO.StringReader reader = new System.IO.StringReader(simulatedInput)) // Redirect standard input to read from our string instead of the keyboard
+        // {
+        //     Console.SetIn(reader);
+            
+        //     /*// The UCI loop will read commands line-by-line. 
+        //     // Because "go depth 6" blocks while searching, it naturally waits 
+        //     // for a response before reading the next line!*/
+        //     UCIUtility.Loop(board, moveGenerator, evaluation, search);
+            
+        // }
+        
+        
+        // Console.SetIn(new System.IO.StreamReader(Console.OpenStandardInput()));// Restore standard input for normal console usage
+
+
+        /*
         // Stopwatch stopwatch = new Stopwatch();
 
         // stopwatch.Start();
@@ -42,30 +209,31 @@ class Program
         //     search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
         //     Console.WriteLine($"Run {i+1}: Search nodes = {search.nodeCount} , Quiescence nodes = {search.qNodes}, Total Nodes = {search.nodeCount + search.qNodes}");
         // }
-        int eval = search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
-        // stopwatch.Stop();
-
-        double hitRate = 100.0 * search.ttHits / search.ttProbes;
-
-        double totalNodes = search.nodeCount + search.qNodes;
+        
+        // // stopwatch.Stop();
+        //
+        // double hitRate = 100.0 * search.ttHits / search.ttProbes;
+        //
+        // double totalNodes = search.nodeCount + search.qNodes;
         // double avgTimeMs = stopwatch.Elapsed.TotalMilliseconds / 10.0;
-
+        //
         // double nps = totalNodes / (stopwatch.Elapsed.TotalSeconds/10);
-
-        Console.WriteLine($"Search nodes = {search.nodeCount:N0}");
-        Console.WriteLine($"Quiescence nodes = {search.qNodes:N0}");
-        Console.WriteLine($"Total nodes = {totalNodes:N0}");
-        Console.WriteLine($"Evaluation: {eval}");
+        //
+        // Console.WriteLine($"Search nodes = {search.nodeCount:N0}");
+        // Console.WriteLine($"Quiescence nodes = {search.qNodes:N0}");
+        // Console.WriteLine($"Total nodes = {totalNodes:N0}");
+        //
         // Console.WriteLine($"Average Time = {avgTimeMs:F2}");
         // Console.WriteLine($"NPS = {nps:N0}");
-
+        //
         // Console.WriteLine($"TT Cutoffs: {search.ttCutoffs}");
         // Console.WriteLine($"TT Probes: {search.ttProbes}");
         // Console.WriteLine($"TT Hits: {search.ttHits}");
         // Console.WriteLine($"TT Hit Rate: {hitRate:F2}%");
 
-
-        search.PrintPrincipalVariation();
+        */
+       
+        
 
 
         /*

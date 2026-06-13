@@ -51,32 +51,55 @@ public class Search
         nodeCount = 0; // Clear the board for the new search
         leafCount = 0;
         qNodes = 0;
+        ttMoveFirst = 0;
+        ttMoveBest = 0;
         return NegaMax(board, moveGenerator, evaluation, depth, alpha, beta, ply);
     }
 
     public long ttProbes, ttHits, ttCutoffs;
-    
+    public long ttMoveFirst;
+    public long ttMoveBest;
 
 
     public int NegaMax(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta, int ply) 
     {
+        nodeCount++;
+
+        if (ply >= MaxPly)
+        {
+            //THE PLY COUNT HAS EXCEEDED MAX SET LIMIT. DO SOMETHING IDK
+            return evaluation.EvaluatePosition(board);
+        }
+
+        pvLength[ply] = 0; //set it to 0 for each recursive call to prevent PV pollution
+
         //TT
         int originalAlpha = alpha;
+        int bestScore = -500000;
         Move bestMoveThisNode = new Move(0); // Track the best move found to store in the TT
         
         ttProbes++;
+
+
+
         //probing logic for TT.
         //Probing means, before the search algorithm spend crucial resources searching through a position, does that position already exist in the TT? i.e. have we searched through this exact position before?
         int index = (int)(board.currentHash % (ulong)TT.table.Length); //since one particulat hash will be stored at one particular index, we can straight up jump to that index without needing to loop through the TT.
         if(TT.table[index].zobristKey == board.currentHash)
         {
             ttHits++;
-            bestMoveThisNode = TT.table[index].bestMove;
 
-            if(TT.table[index].depth >= depth)
+
+            bestMoveThisNode = TT.table[index].bestMove;
+        
+            if(TT.table[index].depth >= depth && ply > 0)
             {
                 byte flag_temp = TT.table[index].flagType;
                 int storedScore = TT.table[index].score;
+
+                // Adjust mate scores retrieved from TT (clamp to avoid catching +/- infinity)
+                if (storedScore > 90000 && storedScore < 400000) storedScore -= ply;
+                else if (storedScore < -90000 && storedScore > -400000) storedScore += ply;
 
                 // 1. Exact Match Check
                 if (flag_temp == (byte)TT.Flags.exactScore) 
@@ -102,15 +125,8 @@ public class Search
         }
         //TT part end
 
-        nodeCount++;
-
-        if (ply >= MaxPly)
-        {
-            //THE PLY COUNT HAS EXCEEDED MAX SET LIMIT. DO SOMETHING IDK
-            return evaluation.EvaluatePosition(board);
-        }
-
-        pvLength[ply] = 0; //set it to 0 for each recursive call.
+        Move ttMove = bestMoveThisNode;
+        bool hadTTMove = ttMove.Value != 0;
 
         if (depth == 0) 
         {
@@ -142,7 +158,7 @@ public class Search
             // // Make sure the move isn't a blank move before rewarding it 1,000,000 points!
             if (newMove.Value == bestMoveThisNode.Value && bestMoveThisNode.Value != 0) 
             {
-                moveScore[i] = 1000000; 
+                moveScore[i] = 15000; 
             }
 
             else
@@ -190,7 +206,14 @@ public class Search
             moveScore[bestMoveIndex] = temp;
         
 #endregion
-            
+
+
+            if (i == 0 && ttMove.Value != 0 && moveList[0].Value == ttMove.Value)
+            {
+                ttMoveFirst++;
+            }
+
+
             // continuation of search
             Move move = moveList[i];
 
@@ -277,6 +300,13 @@ public class Search
         
             board.UnmakeMove(move);
 
+            //fail soft
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestMoveThisNode = move; // Track the best move for TT
+            }
+
 
             //Alpha-Beta pruning
             if (score >= beta) 
@@ -296,7 +326,21 @@ public class Search
                 */
 
 
-                TT.Store(board.currentHash, (byte)depth, score, (byte)TT.Flags.hashBeta, move); //hashBeta is the lowerbound score.
+                int ttScore = score;
+                if (ttScore > 90000 && ttScore < 400000) ttScore += ply;
+                else if (ttScore < -90000 && ttScore > -400000) ttScore -= ply;
+
+
+                if (hadTTMove && bestMoveThisNode.Value == ttMove.Value)
+                {
+                    ttMoveBest++;
+                }
+
+                TT.Store(board.currentHash, (byte)depth, ttScore, (byte)TT.Flags.hashBeta, move); //hashBeta is the lowerbound score.
+
+
+
+                // TT.Store(board.currentHash, (byte)depth, score, (byte)TT.Flags.hashBeta, move); //hashBeta is the lowerbound score.
                 return score; //If this branch leads to a worse outcome, do not consider it. Return beta and get out of the path.
             }
             if (score > alpha) 
@@ -304,9 +348,7 @@ public class Search
                 //normal alpha beta pruning logic. We found a better move, update score.
                 alpha = score; //We found a better move for ourselves
              
-                pvTable[ply, 0] = move; //stores the best move found at this depth.
-                bestMoveThisNode = move; // Store the move for TT
-                
+                pvTable[ply, 0] = move; //stores the best move found at this depth.                
                 // 2. Copy the sequence of moves from the deeper ply
                 for (int j = 0; j < pvLength[ply + 1]; j++)
                 {
@@ -320,6 +362,28 @@ public class Search
 
         }
 
+
+        // if (bestMoveThisNode.Value != 0)
+        // {
+        //     bool found = false;
+
+        //     for(int i = 0; i < moveCount; i++)
+        //     {
+        //         if(moveList[i].Value == bestMoveThisNode.Value)
+        //         {
+        //             found = true;
+        //             break;
+        //         }
+        //     }
+
+        //     if(!found)
+        //     {
+        //         Console.WriteLine("TT move not found!");
+        //         Console.Out.Flush();
+        //         Environment.Exit(1);
+        //     }
+        // }
+
         //STALEMATE, CHECKMATE CHECK.
         if(legalMovesPlayed == 0)
         {
@@ -328,7 +392,7 @@ public class Search
 
             if((currentKingSquare != -1) && board.IsSquareAttacked(currentKingSquare, colorToMove))
             {
-                return -100000; //checkmate
+                return -100000 + ply; //checkmate
             }
             else
             {
@@ -342,9 +406,28 @@ public class Search
 
         Imagine in that some node at depth n, we entered the search with 30 alpha, 70 beta and 50 score, this becomes our exact score since this fits inside the upperbound(calculated right here) and lowerbound(calculated above.)
         */
-        byte flag = (alpha <= originalAlpha) ? (byte)TT.Flags.hashAlpha : (byte)TT.Flags.exactScore;
-        TT.Store(board.currentHash, (byte)depth, alpha, flag, bestMoveThisNode);
-        return alpha;
+        // byte flag = (alpha <= originalAlpha) ? (byte)TT.Flags.hashAlpha : (byte)TT.Flags.exactScore;
+
+
+        byte flag = (bestScore <= originalAlpha) ? (byte)TT.Flags.hashAlpha : (byte)TT.Flags.exactScore;
+
+
+        int ttScoreToStore = bestScore;
+        if (ttScoreToStore > 90000 && ttScoreToStore < 400000) ttScoreToStore += ply;
+        else if (ttScoreToStore < -90000 && ttScoreToStore > -400000) ttScoreToStore -= ply;
+
+        if (hadTTMove && bestMoveThisNode.Value == ttMove.Value)
+        {
+            ttMoveBest++;
+        }
+        
+        TT.Store(board.currentHash, (byte)depth, ttScoreToStore, flag, bestMoveThisNode);
+
+
+
+
+        // TT.Store(board.currentHash, (byte)depth, alpha, flag, bestMoveThisNode);
+        return bestScore;
     }
 
 
@@ -494,7 +577,7 @@ public class Search
         // immediately evaluate this branch as a loss (checkmate).
         if (currentKingSquare == -1)
         {
-            return -100000;
+            return -100000 + ply;
         }
 
         bool inCheck = board.IsSquareAttacked(currentKingSquare, board.colorToMove);
@@ -505,6 +588,13 @@ public class Search
         Move[] moveList = new Move[256];
         int moveCount = 0;
 
+
+
+        int bestScore = -500000;
+
+
+
+
         if(inCheck)
         {
             moveGenerator.GenerateAllPseudoLegalMoves(board, moveList, ref moveCount);
@@ -513,7 +603,21 @@ public class Search
         else
         {
             int standPat = evaluation.EvaluatePosition(board);
-            if(standPat >= beta) return beta;
+            
+            // if(standPat >= beta) return beta;
+            
+
+
+
+
+            bestScore = standPat;
+
+            if(standPat >= beta) return standPat;
+            
+            
+            
+            
+            
             if(standPat > alpha) alpha = standPat;
 
             moveGenerator.GenerateAllPseudoLegalCaptures(board, moveList, ref moveCount);
@@ -606,6 +710,15 @@ public class Search
             board.UnmakeMove(move);
 
 
+            //fail soft
+            if (score > bestScore)
+            {
+                bestScore = score;
+            }
+
+
+
+
             //alpha beta pruning
             if(score >= beta)
             {
@@ -652,12 +765,14 @@ public class Search
 #endregion
         if(inCheck && legalMovesPlayed == 0)
         {
-            return -100000;
+            return -100000 + ply;
             
         }
 
 
-        return alpha;
+        return bestScore;
+
+        // return alpha;
     }
 
 
@@ -721,26 +836,70 @@ public class Search
         return 0;
     }
 
+    // public Move GetBestMove(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth)
+    // {
+    //     // 1. Reset any global search statistics
+    //     nodeCount = 0;
+    //     qNodes = 0;
+    //     leafCount = 0;
+    //     ttMoveFirst = 0;
+    //     ttMoveBest = 0;
+
+    //     // 2. Set initial Alpha and Beta bounds to +/- infinity
+    //     // Make sure these match or exceed the highest possible scores (like your +/- 100000 for mate)
+    //     int infinity = 500000; 
+    //     int alpha = -infinity;
+    //     int beta = infinity;
+
+    //     // 3. Initiate the search from the root (ply = 0)
+    //     int score = NegaMax(board, moveGenerator, evaluation, depth, alpha, beta, 0);
+
+    //     // 4. Retrieve the best move from the root of the PV table
+    //     Move bestMove = pvTable[0, 0];
+
+    //     string pvString = "";
+    //     for (int i = 0; i < pvLength[0]; i++)
+    //     {
+    //         pvString += BoardUtility.MoveToUci(pvTable[0, i]) + " ";
+    //     }
+
+    //     //Print info to the UCI GUI 
+    //     Console.WriteLine($"info depth {depth} score cp {score} nodes {nodeCount + qNodes} pv {pvString.TrimEnd()}");
+
+    //     return bestMove;
+    // }
+
+
     public Move GetBestMove(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth)
     {
-        // 1. Reset any global search statistics
         nodeCount = 0;
         leafCount = 0;
-
-        // 2. Set initial Alpha and Beta bounds to +/- infinity
-        // Make sure these match or exceed the highest possible scores (like your +/- 100000 for mate)
         int infinity = 500000; 
-        int alpha = -infinity;
-        int beta = infinity;
+        Move bestMove = new Move(0);
 
-        // 3. Initiate the search from the root (ply = 0)
-        int score = NegaMax(board, moveGenerator, evaluation, depth, alpha, beta, 0);
+        // Iterative Deepening Loop
+        for (int currentDepth = 1; currentDepth <= depth; currentDepth++)
+        {
+            int alpha = -infinity;
+            int beta = infinity;
+            
+            // Search the current depth. The TT will pass move ordering from the previous depth!
+            int score = NegaMax(board, moveGenerator, evaluation, currentDepth, alpha, beta, 0);
+            
+            // Grab the best move found at this depth
+            bestMove = pvTable[0, 0];
 
-        // 4. Retrieve the best move from the root of the PV table
-        Move bestMove = pvTable[0, 0];
+        string pvString = "";
+        for (int i = 0; i < pvLength[0]; i++)
+        {
+            pvString += BoardUtility.MoveToUci(pvTable[0, i]) + " ";
+        }
 
-        // Optional: Print info to the UCI GUI 
-        // Console.WriteLine($"info depth {depth} score cp {score} nodes {nodeCount}");
+        //Print info to the UCI GUI 
+        Console.WriteLine($"info depth {depth} score cp {score} nodes {nodeCount + qNodes} pv {pvString.TrimEnd()}");
+
+            
+        }
 
         return bestMove;
     }

@@ -69,4 +69,9 @@ public static class TT
     
     
     }
+    public static void Clear()
+    {
+        // Wipes the entire array back to default values (zeros/nulls)
+        Array.Clear(table, 0, table.Length);
+    }
 }

@@ -33,6 +33,7 @@ public static class UCIUtility
 
                 case "ucinewgame":
                     // Clear hash tables, reset history heuristics, etc.
+                    TT.Clear();
                     break;
 
                 case "position":
@@ -112,6 +113,8 @@ public static class UCIUtility
                 ApplyUciMove(uciMove, board, moveGenerator);
             }
         }
+
+        
     }
 
 
@@ -130,7 +133,7 @@ public static class UCIUtility
         startSquare = startRank*8 + startFile;
         targetSquare = targetRank*8 + targetFile;
 
-        Console.WriteLine($"Applying UCI Move: {uciMove} | Target StartSq: {startSquare}, Target TargetSq: {targetSquare}");
+        // Console.WriteLine($"Applying UCI Move: {uciMove} | Target StartSq: {startSquare}, Target TargetSq: {targetSquare}");
         // BoardPrinter.PrintBitboard(board);
 
         //check for promotion
@@ -206,7 +209,7 @@ public static class UCIUtility
                 else
                 {
                     // CAUGHT A FLAG ERROR
-                    // Console.WriteLine($"[DEBUG] Squares matched for {uciMove}, but rejected by flags! move.Flag: {move.Flag}, uciPromoFlag: {promotionFlag}");
+                    Console.WriteLine($"[DEBUG] Squares matched for {uciMove}, but rejected by flags! move.Flag: {move.Flag}, uciPromoFlag: {promotionFlag}");
                 }
             }
         }
@@ -272,10 +275,17 @@ public static class UCIUtility
         // TODO: Pass time parameters to your search if you implement time management.
         // For a bare-bones engine, you can just rely on fixed depth to start.
 
-        Console.WriteLine("BOARD STATE BEFORE SEARCH:");
-        BoardPrinter.PrintBitboard(board);
+        // Console.WriteLine("BOARD STATE BEFORE SEARCH:");
+        // BoardPrinter.PrintBitboard(board);
         // 1. Call your actual search function
         Move bestMove = search.GetBestMove(board, moveGenerator, evaluation, depth); 
+        Console.WriteLine($"info string TT move searched first: {search.ttMoveFirst}");
+        Console.WriteLine($"info string TT move ended up best: {search.ttMoveBest}");
+
+        if (search.ttMoveFirst > 0)
+        {
+            Console.WriteLine($"info string TT accuracy: {(100.0 * search.ttMoveBest / search.ttMoveFirst):F2}%");
+        }
 
 #region debug
         // // BoardPrinter.PrintBitboard(board);
