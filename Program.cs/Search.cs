@@ -26,7 +26,9 @@ public class Search
     
     */
 
-    const int MaxPly = 256;
+    const int MaxPly = 256; //ply represents half move. ! full move = 2 ply.
+
+    ushort[,] killerMoves = new ushort[MaxPly, 2];
     Move[,] pvTable = new Move[MaxPly, MaxPly]; //fixed 2d array to store the move and depth score.
     int[] pvLength = new int[MaxPly]; //need to track how long the move sequence is at each depth so it can be copied downward at the next depth level
 
@@ -53,12 +55,17 @@ public class Search
         qNodes = 0;
         ttMoveFirst = 0;
         ttMoveBest = 0;
+        killerMovesHit = 0;
+        killerMovesProbed = 0;
+        Array.Clear(killerMoves, 0, killerMoves.Length);
         return NegaMax(board, moveGenerator, evaluation, depth, alpha, beta, ply);
     }
 
     public long ttProbes, ttHits, ttCutoffs;
     public long ttMoveFirst;
     public long ttMoveBest;
+    public long killerMovesHit, killerMovesProbed;
+    public long gameKillerMovesHit, gameKillerMovesProbed;
 
 
     public int NegaMax(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta, int ply) 
@@ -163,7 +170,7 @@ public class Search
 
             else
             {
-                moveScore[i] = ScoreMove(newMove, board);
+                moveScore[i] = ScoreMove(newMove, board, ply);
             }
 
             //========================================================================================================
@@ -216,6 +223,13 @@ public class Search
 
             // continuation of search
             Move move = moveList[i];
+            
+            bool isKiller = (move.Value != 0) && (move.Value == killerMoves[ply, 0] || move.Value == killerMoves[ply, 1]);
+            if (isKiller)
+            {
+                killerMovesProbed++;
+                gameKillerMovesProbed++;
+            }
 
 
 #region debug
@@ -311,6 +325,12 @@ public class Search
             //Alpha-Beta pruning
             if (score >= beta) 
             {
+                if (isKiller)
+                {
+                    killerMovesHit++;
+                    gameKillerMovesHit++;
+                }
+                
                 /*Beta cutoff in alpha beta pruning and TT are somewhat different. In alpha beta pruning, the beta cutoff is telling us that if a line is too good for us and the opponent already has another line that whose score is less than the score of this line then the opponent will never let us enter that path.
                 That path is 'too good' because up in the tree, the opponent has another line that leads to a better evaluation for them
                 A better, guaranteed evaluation for the opponent is the beta score..
@@ -325,6 +345,24 @@ public class Search
                 
                 */
 
+
+                /*If a quiet move causes a beta cutoff then that move is likely good. So we store that move in a killer move array. 
+                A killer move is a move that is non capture. As beta cutoof only happens when choosing this branch will lead to us getting a better evaluation, this means that a quiet move raised our eval.*/
+
+                //=========================killer move==================================
+
+                if(board.pieceOnSquare[move.TargetSquare] == -1 && move.Flag != (int)Move.MoveFlag.enPassantCapture)
+                {
+                    if(move.Value != killerMoves[ply,0])
+                    {
+                        killerMoves[ply, 1] = killerMoves[ply, 0]; //shift the prevoius killer move
+                    
+                        killerMoves[ply, 0] = move.Value; //store the move.value to killermove[ply,0]
+                    }
+                }
+
+
+                //=========================killer move==================================
 
                 int ttScore = score;
                 if (ttScore > 90000 && ttScore < 400000) ttScore += ply;
@@ -629,7 +667,7 @@ public class Search
         int[] moveScore = new int[moveCount];
         for(int i = 0; i<moveCount; i++)
         {
-            moveScore[i] = ScoreMove(moveList[i], board); //assign scores to moves and store those in moveScore array
+            moveScore[i] = ScoreMove(moveList[i], board, ply); //assign scores to moves and store those in moveScore array
         }
 
 
@@ -793,7 +831,7 @@ public class Search
 
 
 
-    public int ScoreMove(Move move, Board board)
+    public int ScoreMove(Move move, Board board, int ply)
     {
 
         // int[] pieceValues = {5, 3, 3, 9, 10000, 1, 5, 3, 3, 9, 10000, 1};
@@ -825,14 +863,23 @@ public class Search
             // int capturedPieceValue = pieceValues[capturedPieceType];
             // int movingPieceValue = pieceValues[movingPiece];
             
-            // //MVV - LVA. Most valuable capture, least valuable attacker.
-            // //1000 is a base value
-            // // return 1000 + (10 * capturedPieceValue) - movingPieceValue;
+            // //MVV - LVA. Most valuable capture, least valuable attacker
 
             return Evaluation.mvvLva[movingPieceIndex, capturedPieceIndex];
         }
-        
 
+        if (capturedPieceType == -1) //add scores to killer moves
+        {
+            if (move.Value == killerMoves[ply, 0])
+            {
+                return 90;
+            }
+            else if (move.Value == killerMoves[ply, 1])
+            {
+                return 80;
+            }
+        }
+        
         return 0;
     }
 
@@ -844,6 +891,11 @@ public class Search
     //     leafCount = 0;
     //     ttMoveFirst = 0;
     //     ttMoveBest = 0;
+
+    //     killerMovesHit = 0;
+    //     killerMovesProbed = 0;
+    //     Array.Clear(killerMoves, 0, killerMoves.Length);
+
 
     //     // 2. Set initial Alpha and Beta bounds to +/- infinity
     //     // Make sure these match or exceed the highest possible scores (like your +/- 100000 for mate)
@@ -865,6 +917,11 @@ public class Search
 
     //     //Print info to the UCI GUI 
     //     Console.WriteLine($"info depth {depth} score cp {score} nodes {nodeCount + qNodes} pv {pvString.TrimEnd()}");
+        
+    //     double killerHitRate = killerMovesProbed > 0 ? (100.0 * killerMovesHit / killerMovesProbed) : 0;
+
+        
+    //      Console.WriteLine($"info string Killer Probes: {killerMovesProbed} | Killer Hits: {killerMovesHit} | Killer Hit Rate: {killerHitRate:F2}%");
 
     //     return bestMove;
     // }
@@ -880,6 +937,9 @@ public class Search
         ttCutoffs = 0;
         ttMoveFirst = 0;
         ttMoveBest = 0;
+        killerMovesHit = 0;
+        killerMovesProbed = 0;
+        Array.Clear(killerMoves, 0, killerMoves.Length);
 
         int infinity = 500000; 
         Move bestMove = new Move(0);
@@ -909,15 +969,19 @@ public class Search
             long nps = (totalNodes * 1000) / timeMs;
 
             double hitRate = ttProbes > 0 ? (100.0 * ttHits / ttProbes) : 0;
+            double killerHitRate = killerMovesProbed > 0 ? (100.0 * killerMovesHit / killerMovesProbed) : 0;
+            double gameKillerHitRate = gameKillerMovesProbed > 0 ? (100.0 * gameKillerMovesHit / gameKillerMovesProbed) : 0;
 
             //Print info to the UCI GUI 
-            Console.WriteLine($"info string TT Probes: {ttProbes} | TT Hits: {ttHits} | TT Cutoffs: {ttCutoffs} | Hit Rate: {hitRate:F2}%");
+            // Console.WriteLine($"info string TT Probes: {ttProbes} | TT Hits: {ttHits} | TT Cutoffs: {ttCutoffs} | Hit Rate: {hitRate:F2}%");
+            // Console.WriteLine($"info string Killer Probes: {killerMovesProbed} | Killer Hits: {killerMovesHit} | Killer Hit Rate: {killerHitRate:F2}%");
             // FIX: Print 'currentDepth' instead of 'depth' so the GUI sees the progression
             Console.WriteLine($"info depth {currentDepth} score cp {score} time {timeMs} nodes {totalNodes} nps {nps} pv {pvString.TrimEnd()}");
 
 
             //==============================Logging code===================================
             //DISABLE IT IN BENCHMARK RUNS
+            
             if (currentDepth == 8)
             {
                 string engineFolder = AppDomain.CurrentDomain.BaseDirectory;
@@ -931,12 +995,13 @@ public class Search
                 // 3. Standard write check
                 if (!System.IO.File.Exists(filePath))
                 {
-                    System.IO.File.WriteAllText(filePath, "Depth,Nodes,TimeMs\n");
+                    System.IO.File.WriteAllText(filePath, "Depth,Nodes,TimeMs,SearchKillerHitRate,GameKillerHitRate\n");
                 }
 
-                System.IO.File.AppendAllText(filePath, $"8,{totalNodes},{timeMs}\n");
+                System.IO.File.AppendAllText(filePath, $"8,{totalNodes},{timeMs},{killerHitRate:F2},{gameKillerHitRate:F2}\n");
             }
-            //DISABLE IT IN BENCHMARK RUNS
+
+            // DISABLE IT IN BENCHMARK RUNS
             //==============================Logging code===================================
             
 

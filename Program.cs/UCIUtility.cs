@@ -34,6 +34,8 @@ public static class UCIUtility
                 case "ucinewgame":
                     // Clear hash tables, reset history heuristics, etc.
                     TT.Clear();
+                    search.gameKillerMovesHit = 0;
+                    search.gameKillerMovesProbed = 0;
                     break;
 
                 case "position":
