@@ -30,3 +30,44 @@ Material + PST Evaluation:
 Observation:
 Implementation of PST evaluation reduced search speed by approximately 19% while providing significantly improved positional understanding. 
 The performance cost was considered acceptable given the strength improvement observed in practical play.
+
+
+
+
+2. The Hidden Padding (Your struct is currently 24 bytes!)
+In C#, the compiler requires variables to be placed in memory at addresses that match their size. If you place a small variable before a large variable, the compiler injects "invisible" empty bytes (padding) to align the next variable. Furthermore, the total size of the struct is always rounded up to a multiple of its largest variable (which is your 8-byte ulong zobristKey).
+
+Let's look at your current memory layout:
+
+zobristKey (8 bytes)
+depth (1 byte) + 3 bytes invisible padding
+score (4 bytes)
+flagType (1 byte) + 1 byte invisible padding
+bestMove (2 bytes) + 4 bytes invisible padding at the end
+Because of the mixed order, your Transposition struct is currently bloated to 24 bytes per entry! This means your 64MB Transposition Table is actually allocating 100MB in RAM!
+
+
+
+Killer moves or History moevs?? or history heuiristics ? IDK yet
+
+
+
+
+====================
+BEFORE KILLER MOVES. 
+====================
+Nodes = 	48,047,243,377
+Total milliseconds = 	16,199,417
+Nodes per milisecond = 	2,965.98
+Nodes per second = 	2,965,985.95
+
+
+
+
+
+
+
+
+
+
+

@@ -975,31 +975,30 @@ public class Search
             //Print info to the UCI GUI 
             // Console.WriteLine($"info string TT Probes: {ttProbes} | TT Hits: {ttHits} | TT Cutoffs: {ttCutoffs} | Hit Rate: {hitRate:F2}%");
             // Console.WriteLine($"info string Killer Probes: {killerMovesProbed} | Killer Hits: {killerMovesHit} | Killer Hit Rate: {killerHitRate:F2}%");
-            // FIX: Print 'currentDepth' instead of 'depth' so the GUI sees the progression
             Console.WriteLine($"info depth {currentDepth} score cp {score} time {timeMs} nodes {totalNodes} nps {nps} pv {pvString.TrimEnd()}");
 
 
             //==============================Logging code===================================
             //DISABLE IT IN BENCHMARK RUNS
             
-            if (currentDepth == 8)
-            {
-                string engineFolder = AppDomain.CurrentDomain.BaseDirectory;
+            // if (currentDepth == 8)
+            // {
+            //     string engineFolder = AppDomain.CurrentDomain.BaseDirectory;
                 
-                // 1. Get the unique Operating System Process ID for this running instance
-                int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+            //     // 1. Get the unique Operating System Process ID for this running instance
+            //     int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
                 
-                // 2. Embed the PID directly into the filename so instances never collide
-                string filePath = Path.Combine(engineFolder, $"node_counts_depth8_pid_{pid}.csv");
+            //     // 2. Embed the PID directly into the filename so instances never collide
+            //     string filePath = Path.Combine(engineFolder, $"node_counts_depth8_pid_{pid}.csv");
 
-                // 3. Standard write check
-                if (!System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.WriteAllText(filePath, "Depth,Nodes,TimeMs,SearchKillerHitRate,GameKillerHitRate\n");
-                }
+            //     // 3. Standard write check
+            //     if (!System.IO.File.Exists(filePath))
+            //     {
+            //         System.IO.File.WriteAllText(filePath, "Depth,Nodes,TimeMs,SearchKillerHitRate,GameKillerHitRate\n");
+            //     }
 
-                System.IO.File.AppendAllText(filePath, $"8,{totalNodes},{timeMs},{killerHitRate:F2},{gameKillerHitRate:F2}\n");
-            }
+            //     System.IO.File.AppendAllText(filePath, $"8,{totalNodes},{timeMs},{killerHitRate:F2},{gameKillerHitRate:F2}\n");
+            // }
 
             // DISABLE IT IN BENCHMARK RUNS
             //==============================Logging code===================================
