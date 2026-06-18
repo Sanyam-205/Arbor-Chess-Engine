@@ -6,6 +6,43 @@ public class Evaluation
 {
 
     static readonly int[] ColorMultiplier = {1, -1};
+    static readonly ulong[] fileMask= 
+    {
+        /*File A*/ 0x0101010101010101UL, 
+        /*File B*/ 0x0202020202020202UL, 
+        /*File C*/ 0x0404040404040404UL, 
+        /*File D*/ 0x0808080808080808UL,
+        /*File E*/ 0x1010101010101010UL,
+        /*File F*/ 0x2020202020202020UL,
+        /*File G*/ 0x4040404040404040UL,
+        /*File H*/ 0x8080808080808080UL 
+    };
+
+    static readonly ulong[] rankMask =
+    {
+      /*Rank 1*/  0x00000000000000FFUL,
+      /*Rank 2*/  0x000000000000FF00UL,
+      /*Rank 3*/  0x0000000000FF0000UL,
+      /*Rank 4*/  0x00000000FF000000UL,
+      /*Rank 5*/  0x000000FF00000000UL,
+      /*Rank 6*/  0x0000FF0000000000UL,
+      /*Rank 7*/  0x00FF000000000000UL,
+      /*Rank 8*/  0xFF00000000000000UL 
+    };
+
+    static readonly ulong[] passedPawnFileMask = new ulong[8];
+    static readonly ulong[] whitePassedPawnMask = new ulong[64];
+    static readonly ulong[] blackPassedPawnMask = new ulong[64];
+
+    static readonly ulong[] isolatedPawnMask = new ulong[8];
+
+
+    static Evaluation()
+    {
+        InitializePassedPawnMasks();
+        InitializeIsolatedPawnMasks();
+    }
+
     public int EvaluatePosition(Board board)
     {
         
@@ -124,8 +161,8 @@ public class Evaluation
 
             int attackSquares = BitOperations.PopCount(rookAttacks);
 
-            blackEndgameScore += PST_Rook [squareIndex] + rookMobility_middlegame[attackSquares] + 500;
-            blackMiddlegameScore += PST_Rook [squareIndex] + rookMobility_endgame[attackSquares] +  500;
+            blackMiddlegameScore += PST_Rook [squareIndex] + rookMobility_middlegame[attackSquares] +  500;
+            blackEndgameScore += PST_Rook [squareIndex] + rookMobility_endgame[attackSquares] + 500;
 
             blackRooks &= blackRooks -1;
         }
@@ -174,9 +211,52 @@ public class Evaluation
         while(whitePawns!=0)
         {
             int squareIndex = BitOperations.TrailingZeroCount(whitePawns);
+            int file = squareIndex & 7;
+            int rank = squareIndex >> 3;
 
-            whiteMiddlegameScore += PST_WhitePawn_Starting[squareIndex] + 100;
-            whiteEndgameSCore += PST_WhitePawn_EndGame[squareIndex] + 100;
+            int middlegamePassedPawnBonus = 0;
+            int endgamePassedPawnBonus = 0;
+
+            //================================================Passed Pawns=======================================================
+
+            ulong pawnMask = whitePassedPawnMask[squareIndex];
+
+            if((pawnMask & board.pieceBitboards[(int)Piece.BlackPawns]) == 0)
+            {
+                middlegamePassedPawnBonus += whitePassedPawn_Middlegame[rank];
+                endgamePassedPawnBonus += whitePassedPawn_Endgame[rank];
+                
+                bool defended = (AttackTables.blackPawnAttacks[squareIndex] & board.pieceBitboards[(int)Piece.WhitePawns]) != 0;
+                if(defended)//defended passed pawn
+                {
+                    middlegamePassedPawnBonus += whiteDefendedPassedPawn_Middlegame[rank];
+                    endgamePassedPawnBonus += whiteDefendedPassedPawn_Endgame[rank];
+                }
+            }
+
+            //==========================================Passed Pawns End==========================================================
+
+            int isolatedPenalty = 0;
+
+            //==========================================Isolated Pawns==========================================================
+
+            bool isolated = (isolatedPawnMask[file] & board.pieceBitboards[(int)Piece.WhitePawns]) == 0;
+
+            if(isolated) isolatedPenalty = -15;
+
+            //==========================================Isolated Pawns End==========================================================
+
+            int doubledPawnsPenalty = 0;
+
+            //==========================================Doubled Pawns==========================================================
+
+            ulong pawnsOnFile = board.pieceBitboards[(int)Piece.WhitePawns] & fileMask[file];
+            if(BitOperations.PopCount(pawnsOnFile) > 1) doubledPawnsPenalty = -10;
+
+            //==========================================Doubled Pawns End==========================================================
+
+            whiteMiddlegameScore += PST_WhitePawn_Starting[squareIndex] + middlegamePassedPawnBonus + isolatedPenalty + doubledPawnsPenalty + 100;
+            whiteEndgameSCore += PST_WhitePawn_EndGame[squareIndex] + endgamePassedPawnBonus + isolatedPenalty + doubledPawnsPenalty + 100;
 
             whitePawns &= whitePawns -1;
         }
@@ -185,9 +265,54 @@ public class Evaluation
         while(blackPawns!=0)
         {
             int squareIndex = BitOperations.TrailingZeroCount(blackPawns);
+            int file = squareIndex & 7;
+            int rank = squareIndex >> 3;
 
-            blackMiddlegameScore += PST_BlackPawn_Starting[squareIndex] + 100;
-            blackEndgameScore += PST_BlackPawn_EndGame[squareIndex] + 100;
+            int middlegamePassedPawnBonus = 0;
+            int endgamePassedPawnBonus = 0;
+
+            //================================================Passed Pawns=======================================================
+
+            ulong pawnMask = blackPassedPawnMask[squareIndex];
+
+            if((pawnMask & board.pieceBitboards[(int)Piece.WhitePawns]) == 0)
+            {
+                middlegamePassedPawnBonus += blackPassedPawn_Middlegame[rank];
+                endgamePassedPawnBonus += blackPassedPawn_Endgame[rank];
+
+                bool defended = (AttackTables.whitePawnAttacks[squareIndex] & board.pieceBitboards[(int)Piece.BlackPawns]) != 0;
+                if(defended)//defended passed pawn
+                {
+                    middlegamePassedPawnBonus += blackDefendedPassedPawn_Middlegame[rank];
+                    endgamePassedPawnBonus += blackDefendedPassedPawn_Endgame[rank];
+                }
+            }
+
+            //==========================================Passed Pawns End==========================================================
+
+
+            int isolatedPenalty = 0;
+
+
+            //==========================================Isolated Pawns==========================================================
+
+            bool isolated = (isolatedPawnMask[file] & board.pieceBitboards[(int)Piece.BlackPawns]) == 0;
+
+            if(isolated) isolatedPenalty = -15;
+
+            //==========================================Isolated Pawns End==========================================================
+
+            int doubledPawnsPenalty = 0;
+
+            //==========================================Doubled Pawns==========================================================
+
+            ulong pawnsOnFile = board.pieceBitboards[(int)Piece.BlackPawns] & fileMask[file];
+            if(BitOperations.PopCount(pawnsOnFile) > 1) doubledPawnsPenalty = -10;
+
+            //==========================================Doubled Pawns End==========================================================
+
+            blackMiddlegameScore += PST_BlackPawn_Starting[squareIndex] + middlegamePassedPawnBonus + isolatedPenalty + doubledPawnsPenalty + 100;
+            blackEndgameScore += PST_BlackPawn_EndGame[squareIndex] + endgamePassedPawnBonus + isolatedPenalty + doubledPawnsPenalty + 100;
 
             blackPawns &= blackPawns -1;
         }
@@ -248,42 +373,80 @@ public class Evaluation
         return score;
     }
 
-    public static readonly int[] bishopMobility_middlegame =
+    static readonly int[] whitePassedPawn_Middlegame =
+    {
+        0, 0, 5, 10, 20, 35, 60, 0
+    };
+
+    static readonly int[] whitePassedPawn_Endgame =
+    {
+        0, 0, 10, 20, 40, 70, 120, 0
+    };
+
+    static readonly int[] whiteDefendedPassedPawn_Middlegame =
+    {
+        0, 0, 5, 5, 10, 15, 20, 0
+    };
+
+    static readonly int[] whiteDefendedPassedPawn_Endgame =
+    {
+        0, 0, 5, 10, 15, 25, 40, 0
+    };
+
+    static readonly int[] blackPassedPawn_Middlegame =
+    {
+        0, 60, 35, 20, 10, 5, 0, 0
+    };
+
+    static readonly int[] blackPassedPawn_Endgame =
+    {
+        0, 120, 70, 40, 20, 10, 0, 0  
+    };
+
+    static readonly int[] blackDefendedPassedPawn_Middlegame =
+    {
+        0, 20, 15, 10, 5, 5, 0, 0   
+    };
+    static readonly int[] blackDefendedPassedPawn_Endgame =
+    {
+        0, 40, 25, 15, 10, 5, 0, 0  
+    };
+    static readonly int[] bishopMobility_middlegame =
     {
       // bonus or penalties for number of squares a bishop attacks
       -25, -11, -4, 0, 3, 7, 11, 15, 18, 21, 23, 25, 26, 27
     };
-    public static readonly int[] bishopMobility_endgame =
+    static readonly int[] bishopMobility_endgame =
     {
       -30, -14, -4, 2, 7, 13, 19, 24, 29, 33, 36, 38, 40, 41
     };
     
-    public static readonly int[] rookMobility_middlegame =
+    static readonly int[] rookMobility_middlegame =
     {
         -4, -2, 0, 1, 3, 5, 7, 9, 11, 12, 13, 14, 14, 14, 14
     };
     
-    public static readonly int[] rookMobility_endgame =
+    static readonly int[] rookMobility_endgame =
     {
         -15, -10, -5, -1, 2, 5, 8, 11, 14, 17, 19, 21, 22, 23, 24
     };
 
-    public static readonly int[] queenMobility_middlegame = 
+    static readonly int[] queenMobility_middlegame = 
     { 
         -30, -20, -10, -5, -1, 1, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 
     };
 
-    public static readonly int[] queenMobility_endgame = 
+    static readonly int[] queenMobility_endgame = 
     { 
         -45, -30, -15, -4, 4, 12, 18, 23, 27, 30, 33, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 
     };
 
-    public static readonly int[] knightMobility_middlegame = 
+    static readonly int[] knightMobility_middlegame = 
     { 
         -20, -10, -5, 0, 3, 6, 9, 11, 12 
     };
 
-    public static readonly int[] knightMobility_endgame = 
+    static readonly int[] knightMobility_endgame = 
     { 
         -25, -12, -6, 0, 4, 8, 12, 15, 17 
     };
@@ -453,6 +616,67 @@ public class Evaluation
       -30, -20, -10,   0,   0, -10, -20, -30,
       -40, -30, -30, -30, -30, -30, -30, -40
     };
+
+
+    static void InitializePassedPawnMasks()
+    {
+        // A-file (0): Files A and B
+        passedPawnFileMask[0] = fileMask[0] | fileMask[1];
+        
+        // B-file (1) through G-file (6): Files (file-1), file, and (file+1)
+        for (int i = 1; i <= 6; i++)
+        {
+            passedPawnFileMask[i] = fileMask[i - 1] | fileMask[i] | fileMask[i + 1];
+        }
+        
+        // H-file (7): Files G and H
+        passedPawnFileMask[7] = fileMask[6] | fileMask[7];
+
+        InitializeMasks();
+    }
+
+    static void InitializeMasks()
+    {
+        for (int square = 0; square < 64; square++)
+        {
+            int rank = square / 8;
+            int file = square % 8;
+
+            ulong forwardRanks = 0;
+            
+            // 1. Combine all ranks ahead of the pawn using OR
+            for (int r = rank + 1; r <= 7; r++)
+            {
+                forwardRanks |= rankMask[r];
+            }
+
+            // 2. Intersect the files and the forward ranks using AND
+            whitePassedPawnMask[square] = passedPawnFileMask[file] & forwardRanks;
+
+            ulong backwardRanks = 0;
+
+            for(int r = rank - 1; r >= 0; r--)
+            {
+                backwardRanks |= rankMask[r];
+            }
+            blackPassedPawnMask[square] = passedPawnFileMask[file] & backwardRanks;
+        }
+    }
+
+    static void InitializeIsolatedPawnMasks()
+    {
+        // A-file (0): Only check B-file
+        isolatedPawnMask[0] = fileMask[1];
+        
+        // B-file to G-file (1-6): Check adjacent files
+        for (int i = 1; i <= 6; i++)
+        {
+            isolatedPawnMask[i] = fileMask[i - 1] | fileMask[i + 1];
+        }
+        
+        // H-file (7): Only check G-file
+        isolatedPawnMask[7] = fileMask[6];
+    }
 
 
 
