@@ -17,7 +17,7 @@ class Program
         Search search = new Search();
         Evaluation evaluation = new Evaluation();
 
-        // UCIUtility.Loop(board, moveGenerator, evaluation, search);
+        UCIUtility.Loop(board, moveGenerator, evaluation, search);
 
         // string fen1 = "8/5pk1/1R2p3/4P1pp/8/4K3/8/5r2 w - - 8 61";
         // string errorFen2 = "Q1Q3Q1/8/8/2P5/8/1K1k3P/8/8 b - - 14 82";
@@ -29,23 +29,27 @@ class Program
         // perft2 - middlegame (perft)
         // fen13 - endgame (mine)
 
-        string fen1 = TestPositions.perft6;
-        FenUtility.LoadFromFen(fen1, board);
-        // 
-        int searchDepth = 8;
-        int infinity = 500000;
-        //
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-        int loopCount = 1;
-        for(int i = 0; i<loopCount; i++)
-        {
-            search.ClearHistory();
-            TT.Clear();
-            int eval = search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
-        }
-        stopwatch.Stop();
-        Console.WriteLine($"NodeCount = {(search.nodeCount + search.qNodes) :N0}\nAverage time = {stopwatch.Elapsed.TotalMilliseconds / loopCount:N0}ms\nNPS = {(search.nodeCount+search.qNodes) / (stopwatch.Elapsed.TotalSeconds / loopCount):N0}");
+        // string fen1 = TestPositions.perft6;
+        // FenUtility.LoadFromFen(fen1, board);
+        // // 
+        // int searchDepth = 5;
+        // int infinity = 500000;
+        // //
+        // Stopwatch stopwatch = new Stopwatch();
+        // stopwatch.Start();
+        // int loopCount = 1;
+        // for(int i = 0; i<loopCount; i++)
+        // {
+        //     search.ClearHistory();
+        //     TT.Clear();
+        //     int eval = search.StartSearch(board, moveGenerator, evaluation, searchDepth, -infinity, infinity, 0);
+        // }
+        // long nodes = PerftTool.Perft(board, moveGenerator, searchDepth);
+        // stopwatch.Stop();
+        // double time = stopwatch.Elapsed.TotalMilliseconds;
+        // double time_sec = time/1000;
+        // Console.WriteLine($"Perft test : Nodes: {nodes :N0} \nTime: {time :N0}ms \nNPS: {nodes/time_sec :N0}");
+        // Console.WriteLine($"NodeCount = {(search.nodeCount + search.qNodes) :N0}\nAverage time = {stopwatch.Elapsed.TotalMilliseconds / loopCount:N0}ms\nNPS = {(search.nodeCount+search.qNodes) / (stopwatch.Elapsed.TotalSeconds / loopCount):N0}");
         // // // Program.cs (C# Top-Level Statements)
         // //NodeCount = 17,916,356
         // Console.WriteLine($"Evaluation {eval}");

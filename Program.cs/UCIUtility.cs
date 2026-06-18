@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 public static class UCIUtility
 {
@@ -67,7 +68,7 @@ public static class UCIUtility
                     break;
 
                 case "stop":
-                    //AbortSearch = true; //TODO: Complete the stop flag integration
+                    search.abortSearch = true;
                     break;
 
                 case "quit":
@@ -246,9 +247,10 @@ public static class UCIUtility
     {
         string[] tokens = input.Split(' ');
         
-        int depth = 5; // Default depth
+        int depth = -1;
         int wtime = 0, btime = 0, winc = 0, binc = 0;
         int movetime = 0;
+        int movestogo = 0;
 
         // Parse common GUI parameters
         for (int i = 0; i < tokens.Length; i++)
@@ -257,7 +259,11 @@ public static class UCIUtility
             {
                 if (int.TryParse(tokens[i + 1], out int perftDepth))
                 {
-                    PerftTool.PerftDivide(board, moveGenerator, perftDepth);
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
+                    long nodes = PerftTool.Perft(board, moveGenerator, perftDepth);
+                    sw.Stop();
+                    Console.WriteLine($"Node Count = {nodes}, Time = {sw.Elapsed.TotalMilliseconds}, NPS = {nodes/sw.Elapsed.TotalSeconds}");
                 }
                 return;
             }
@@ -273,22 +279,72 @@ public static class UCIUtility
                 int.TryParse(tokens[i + 1], out binc);
             if (tokens[i] == "movetime" && i + 1 < tokens.Length)
                 int.TryParse(tokens[i + 1], out movetime);
+            if (tokens[i] == "movestogo" && i + 1 < tokens.Length)
+                int.TryParse(tokens[i + 1], out movestogo);
         }
 
-        // TODO: Pass time parameters to your search if you implement time management.
-        // For a bare-bones engine, you can just rely on fixed depth to start.
+        int timeLimitMs = -1;
+
+        if (movetime > 0)
+        {
+            timeLimitMs = movetime;
+        }
+        else if (wtime > 0 || btime > 0)
+        {
+            int myTime = board.colorToMove == 0 ? wtime : btime;
+            int myInc = board.colorToMove == 0 ? winc : binc;
+
+            int divisor = 30; // Default
+
+            if (movestogo > 0)
+            {
+                // If the GUI specifies moves to the next time control, allocate time based on that
+                // We add a safety margin (+2) so we don't flag on the last move
+                divisor = movestogo + 2; 
+            }
+            else
+            {
+                // time management based on the game phase (material on board)
+                if (board.phaseScore > 20)
+                {
+                    divisor = 50; // Play faster in the opening (most pieces still on the board)
+                }
+                else if (board.phaseScore > 8)
+                {
+                    divisor = 20; // Spend more time in the complex middlegame
+                }
+                else
+                {
+                    divisor = 25; // Endgame, return to a baseline
+                }
+            }
+
+            // Target a fraction of remaining time + half the increment
+            timeLimitMs = (myTime / divisor) + (myInc / 2);
+            
+            // Make sure we don't exceed the actual time left
+            if (timeLimitMs >= myTime - 50)
+            {
+                timeLimitMs = Math.Max(1, myTime - 50);
+            }
+        }
+
+        if (depth == -1)
+        {
+            depth = (timeLimitMs != -1) ? 256 : 5;
+        }
 
         // Console.WriteLine("BOARD STATE BEFORE SEARCH:");
         // BoardPrinter.PrintBitboard(board);
         // 1. Call your actual search function
-        Move bestMove = search.GetBestMove(board, moveGenerator, evaluation, depth); 
-        Console.WriteLine($"info string TT move searched first: {search.ttMoveFirst}");
-        Console.WriteLine($"info string TT move ended up best: {search.ttMoveBest}");
+        Move bestMove = search.GetBestMove(board, moveGenerator, evaluation, depth, timeLimitMs); 
+        // Console.WriteLine($"info string TT move searched first: {search.ttMoveFirst}");
+        // Console.WriteLine($"info string TT move ended up best: {search.ttMoveBest}");
 
-        if (search.ttMoveFirst > 0)
-        {
-            Console.WriteLine($"info string TT accuracy: {(100.0 * search.ttMoveBest / search.ttMoveFirst):F2}%");
-        }
+        // if (search.ttMoveFirst > 0)
+        // {
+        //     Console.WriteLine($"info string TT accuracy: {(100.0 * search.ttMoveBest / search.ttMoveFirst):F2}%");
+        // }
 
 #region debug
         // // BoardPrinter.PrintBitboard(board);

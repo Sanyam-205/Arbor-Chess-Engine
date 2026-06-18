@@ -103,10 +103,24 @@ public class Search
     public long killerMovesHit, killerMovesProbed;
     public long gameKillerMovesHit, gameKillerMovesProbed;
     public long historyHit, historyProbed;
+    
+    public bool abortSearch = false;
+    public int allocatedTimeMs = -1;
+    public System.Diagnostics.Stopwatch? sw;
 
 
     public int NegaMax(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta, int ply) 
     {
+        // Periodically check if time ran out (every 2048 nodes)
+        if (allocatedTimeMs != -1 && ((nodeCount + qNodes) & 2047) == 0)
+        {
+            if (sw != null && sw.ElapsedMilliseconds >= allocatedTimeMs)
+            {
+                abortSearch = true;
+            }
+        }
+        if (abortSearch) return 0;
+
         nodeCount++;
 
         if (ply >= MaxPly)
@@ -413,14 +427,14 @@ public class Search
                         killerMoves[ply, 0] = move.Value; //store the move.value to killermove[ply,0]
                     }
 
-                    // int bonus = depth * depth;
+                    int bonus = depth * depth;
 
-                    // historyMoves[board.pieceOnSquare[move.StartSquare], move.TargetSquare] += bonus; //assign an internal history score which will be given a move ordering score in ScoreMove
+                    historyMoves[board.pieceOnSquare[move.StartSquare], move.TargetSquare] += bonus; //assign an internal history score which will be given a move ordering score in ScoreMove
 
-                    // if(historyMoves[board.pieceOnSquare[move.StartSquare], move.TargetSquare ] >= 16384)
-                    // {
-                    //     AgeHistoryTable(); //divide the entire history table by 2 so that the raw score never exceeds 16384
-                    // }
+                    if(historyMoves[board.pieceOnSquare[move.StartSquare], move.TargetSquare ] >= maxHistory)
+                    {
+                        AgeHistoryTable(); //divide the entire history table by 2 so that the raw score never exceeds maxHistory
+                    }
                 }
 
                 // Penalize quiet moves that failed to cause a cutoff regardless of the cutoff move type
@@ -529,6 +543,16 @@ public class Search
 
     public int Quiescence (Board board, MoveGenerator moveGenerator, Evaluation evaluation, int alpha, int beta, int ply)
     {
+        // Periodically check if time ran out (every 2048 nodes)
+        if (allocatedTimeMs != -1 && ((nodeCount + qNodes) & 2047) == 0)
+        {
+            if (sw != null && sw.ElapsedMilliseconds >= allocatedTimeMs)
+            {
+                abortSearch = true;
+            }
+        }
+        if (abortSearch) return 0;
+
         qNodes++;
         
         
@@ -862,7 +886,7 @@ public class Search
     // }
 
 
-    public Move GetBestMove(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth)
+    public Move GetBestMove(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int timeLimitMs = -1)
     {
         nodeCount = 0;
         leafCount = 0;
@@ -879,10 +903,15 @@ public class Search
         Array.Clear(killerMoves, 0, killerMoves.Length);
         Array.Clear(historyMoves, 0, historyMoves.Length);
 
+        abortSearch = false;
+        allocatedTimeMs = timeLimitMs;
+
+
+
         int infinity = 500000; 
         Move bestMove = new Move(0);
         
-        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        sw = System.Diagnostics.Stopwatch.StartNew();
 
         // Iterative Deepening Loop
         for (int currentDepth = 1; currentDepth <= depth; currentDepth++)
@@ -893,6 +922,12 @@ public class Search
             // Search the current depth. The TT will pass move ordering from the previous depth!
             int score = NegaMax(board, moveGenerator, evaluation, currentDepth, alpha, beta, 0);
             
+            //time logic
+            //if time ran out, break out of the loop. Do not update the bestMove and return the bestMove found at previous depth.
+            if(abortSearch) break;
+
+
+
             // Grab the best move found at this depth
             bestMove = pvTable[0, 0];
 
