@@ -123,7 +123,7 @@ public class Search
     public System.Diagnostics.Stopwatch? sw;
 
 
-    public int NegaMax(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta, int ply) 
+    public int NegaMax(Board board, MoveGenerator moveGenerator, Evaluation evaluation, int depth, int alpha, int beta, int ply, bool allowNull = true) 
     {
         if (ply < MaxPly)
         {
@@ -165,20 +165,6 @@ public class Search
             }
         }
         // ========================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         nodeCount++;
 
@@ -242,51 +228,47 @@ public class Search
         }
         //TT part end
 
+        #region NMP
+        // // // ========================================================================
+        // // // NULL MOVE PRUNING (NMP)
+        // // // ========================================================================
+        // // int R = 2; // Depth reduction factor 
 
+        int R = 2 + depth / 4;
+        R = Math.Min(R, 4);
+        // 1. Only allow NMP if we are not at the root (ply > 0)
+        // 2. Only if depth is high enough to be reduced
+        // 3. Do not do NMP if we are in check 
+        bool inCheck = board.IsSquareAttacked(board.GetKingSquare(board.colorToMove), board.colorToMove);
 
+        // 4. Zugzwang Check: NEVER do NMP in Pawn-and-King-only endgames. 
+        // Skipping a turn in Zugzwang will artificially inflate your score and blunder the game.
 
-// // ========================================================================
-// // NULL MOVE PRUNING (NMP)
-// // ========================================================================
-// int R = 2; // Depth reduction factor (2 or 3 is standard)
+        // bool hasNonPawnMaterial = board.HasHeavyPieces(board.colorToMove); 
 
-// // 1. Only allow NMP if we are not at the root (ply > 0)
-// // 2. Only if depth is high enough to be reduced
-// // 3. Do not do NMP if we are in check (evasions are mandatory)
-// bool inCheck = board.IsSquareAttacked(board.GetKingSquare(board.colorToMove), board.colorToMove);
+        //the allowNull flag makes sure that twoo moves are not null back to back, If white makes a null move, then in it's response black can't make another null move.
+        if (allowNull && ply > 0 && depth >= R + 1 && !inCheck && board.HasHeavyPieces(board.colorToMove))
+        {
+            // Pass the turn to the opponent. Store board state, update enpassant square.
+            board.MakeNullMove();
+            
+            // Search with a reduced depth and a zero-window around beta
+            int nullScore = -NegaMax(board, moveGenerator, evaluation, depth - 1 - R, -beta, -beta + 1, ply + 1, false); //pass the allowNull flag as false if a null move is made so it's response isn't a null move.
+            
+            board.UnmakeNullMove();
 
-// // 4. Zugzwang Check: NEVER do NMP in Pawn-and-King-only endgames. 
-// // Skipping a turn in Zugzwang will artificially inflate your score and blunder the game.
-// // bool hasNonPawnMaterial = board.HasHeavyPieces(board.colorToMove); 
+            if (abortSearch) return 0;
 
-// if (ply > 0 && depth >= R + 1 && !inCheck && board.HasHeavyPieces(board.colorToMove))
-// {
-//     // Pass the turn to the opponent
-//     Move nullMove = new Move();
-//     board.MakeMove(nullMove);
-    
-//     // Search with a reduced depth and a zero-window around beta
-//     int nullScore = -NegaMax(board, moveGenerator, evaluation, depth - 1 - R, -beta, -beta + 1, ply + 1);
-    
-//     // board.colorToMove ^= 1;
-//     board.UnmakeMove(nullMove);
+            // If skipping our turn STILL beats beta, this position is incredibly strong. Prune it.
+            if (nullScore >= beta)
+            {
+                // if(nullScore >= 90000) return beta; //phantom mate bug. Don't really understand it but its important.
 
-//     if (abortSearch) return 0;
-
-//     // If skipping our turn STILL beats beta, this position is incredibly strong. Prune it.
-//     if (nullScore >= beta)
-//     {
-//         return nullScore; // Massive depth cutoff here!
-//     }
-// }
-// // ========================================================================
-
-
-
-
-
-
-
+                return beta; // Massive depth cutoff here!
+            }
+        }
+        // // ========================================================================
+         #endregion NMP
 
         Move ttMove = bestMoveThisNode;
         bool hadTTMove = ttMove.Value != 0;
@@ -452,7 +434,7 @@ public class Search
                     // Try ZWS at a REDUCED depth (e.g., depth - 2)
                     // (depth - 2) = 1 ply reduction. (depth - 3) = 2 ply reduction. Replaced with the Logarithmic reduction value.
 
-                    int reduction = Evaluation.ReductionTable[depth, Math.Min(legalMovesPlayed, 255)];
+                    int reduction = Evaluation.ReductionTable[Math.Min(depth, 127), Math.Min(legalMovesPlayed, 255)];
                     // int reducedDepth = depth - 1 - reduction;
                     int reducedDepth = Math.Max(1, depth - 1 - reduction);
                     score = -NegaMax(board, moveGenerator, evaluation, reducedDepth, -alpha - 1, -alpha, ply + 1);

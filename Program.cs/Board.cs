@@ -352,6 +352,38 @@ public class Board
 
     }
 
+    public void MakeNullMove()
+    {
+        //store current state
+        history[plyCount].currentHash = currentHash;
+        history[plyCount].enPassantSquare = enPassantSquare;
+        plyCount++;
+
+        if(enPassantSquare != 0)
+        {
+            int enPassantFile = (BitOperations.TrailingZeroCount(enPassantSquare)) % 8;
+            currentHash ^= Zobrist.enPassantKeys[enPassantFile];
+        }
+        enPassantSquare = 0;
+
+        currentHash ^= Zobrist.sideToMoveKeys[colorToMove]; //remove the current turn's zorbist key
+        colorToMove ^= 1; //switch turn
+        currentHash ^= Zobrist.sideToMoveKeys[colorToMove]; //add the new turn's zorbist key
+    }
+
+    public void UnmakeNullMove ()
+    {
+        // 1. Switch the turn back to the original color
+        colorToMove ^= 1;
+
+        // 2. Decrement the ply count to point back to the saved state
+        plyCount--;
+
+        // 3. Restore the exact Zobrist hash and En Passant square from history
+        currentHash = history[plyCount].currentHash;
+        enPassantSquare = history[plyCount].enPassantSquare;
+    }
+
     public void UnmakeMove (Move move)
     {
 
@@ -580,6 +612,7 @@ public class Board
         if((heavyPieves ^ pieceBitboards[(int)Piece.WhitePawns + (color * 6)]) != 0) return true;
         return false;
     }
+
 
 
 }

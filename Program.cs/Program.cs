@@ -12,14 +12,14 @@ class Program
     static void Main()
     {
         
-    AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
-    {
-        Exception ex = (Exception)e.ExceptionObject;
-        int pid = UCIUtility.enginePid;
+    // AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+    // {
+    //     Exception ex = (Exception)e.ExceptionObject;
+    //     int pid = UCIUtility.enginePid;
         
-        string crashLog = $"[{DateTime.Now}] FATAL CRASH (PID: {pid}):\n{ex.ToString()}\n\n";
-        System.IO.File.AppendAllText($"arbor_fatal_crash_{pid}.txt", crashLog);
-    };
+    //     string crashLog = $"[{DateTime.Now}] FATAL CRASH (PID: {pid}):\n{ex.ToString()}\n\n";
+    //     System.IO.File.AppendAllText($"arbor_fatal_crash_{pid}.txt", crashLog);
+    // };
 
 
 
@@ -35,7 +35,7 @@ class Program
         UCIUtility.Loop(board, moveGenerator, evaluation, search);
 
 
-        // string fen1 = "8/8/4K3/2p5/4k3/8/2R5/8 b - - 7 58";
+        // string fen1 = "8/1k6/8/2r5/3K4/8/8/8 w - - 0 78";
         // string errorFen2 = "Q1Q3Q1/8/8/2P5/8/1K1k3P/8/8 b - - 14 82";
 
 
@@ -47,14 +47,14 @@ class Program
 
         // string fen = "r3r1k1/2pp1p1p/p2b2q1/3P1nN1/p2B4/1P6/P1PQ1PPP/R3R1K1 w - - 1 5";
         // string fen = "2r1r1k1/pp1Qbp1p/1q4p1/n2p4/3P1B2/3B3P/PP3PP1/3RR1K1 b - - 0 21";
-        // string fen = TestPositions.fen1;
+        // string fen = TestPositions.fen13;
         // FenUtility.LoadFromFen(fen1, board);
-        // // for(int d = 1; d <=4; d++)
-        // // {
-            // int eval = search.StartSearch(board, moveGenerator, evaluation, 35);
-        // // //     Console.WriteLine($"Depth{d}");
-            // Console.WriteLine($"Evaluation :{eval} \nSearch nodes :{search.nodeCount :N0} \nQuiescence nodes :{search.qNodes :N0} \nTotal nodes :{search.nodeCount + search.qNodes :N0}");
-            // search.PrintPrincipalVariation();
+        // // // // for(int d = 1; d <=4; d++)
+        // // // // {
+        //     int eval = search.StartSearch(board, moveGenerator, evaluation, 9);
+        // // // //     Console.WriteLine($"Depth{d}");
+        //     Console.WriteLine($"Evaluation :{eval} \nSearch nodes :{search.nodeCount :N0} \nQuiescence nodes :{search.qNodes :N0} \nTotal nodes :{search.nodeCount + search.qNodes :N0}");
+        //     search.PrintPrincipalVariation();
         //     Console.WriteLine();
 
         // }
@@ -323,7 +323,7 @@ Total nodes :39,049,017
 
         // string[] crashTest =
         // {
-        
+
             
         // };
 
@@ -992,7 +992,7 @@ TT Cutoffs: 14206   - kiwipete
 
     #region magnum_opus_of_tournament_testing
         // 1. Define the path to the text file you generated
-        // string filePath = @"D:\ArborHelper\uci_commands.txt"; // Use the full absolute path if the file isn't in your build directory
+        // string filePath = @"D:\ArborHelper\crashedGame.txt"; 
 
         // // 2. Read the file into the string array
         // string[] crashTest = System.IO.File.ReadAllLines(filePath);
